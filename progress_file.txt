@@ -1,0 +1,12 @@
+{"original_size": 0, "compressed_size": 0, "deduplicated_size": 0, "nfiles": 0, "time": 1648247800.893736, "type": "archive_progress", "path": "fast-redirect"}
+{"message": "Initializing cache transaction: Reading config", "operation": 1, "msgid": "cache.begin_transaction", "type": "progress_message", "finished": false, "time": 1648247800.895115}
+{"message": "Initializing cache transaction: Reading chunks", "operation": 1, "msgid": "cache.begin_transaction", "type": "progress_message", "finished": false, "time": 1648247800.895796}
+{"message": "Initializing cache transaction: Reading files", "operation": 1, "msgid": "cache.begin_transaction", "type": "progress_message", "finished": false, "time": 1648247800.896926}
+{"operation": 1, "msgid": "cache.begin_transaction", "type": "progress_message", "finished": true, "time": 1648247800.898227}
+{"original_size": 9076969, "compressed_size": 1545177, "deduplicated_size": 0, "nfiles": 944, "time": 1648247801.093757, "type": "archive_progress", "path": "fast-redirect/.mypy_cache/3.8/pathlib.data.json"}
+{"original_size": 0, "compressed_size": 0, "deduplicated_size": 0, "nfiles": 0, "time": 1648247801.14391, "type": "archive_progress", "path": ""}
+{"message": "Saving files cache", "operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": false, "time": 1648247801.160764}
+{"message": "Saving chunks cache", "operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": false, "time": 1648247801.2259068}
+{"message": "Saving cache config", "operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": false, "time": 1648247801.2267032}
+{"operation": 1, "msgid": "extract", "type": "progress_percent", "finished": false}
+{"operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": true, "time": 1648247801.2284238}
