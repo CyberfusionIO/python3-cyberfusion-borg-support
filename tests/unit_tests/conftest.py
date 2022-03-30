@@ -1,6 +1,5 @@
 import pytest
 
-from cyberfusion.BorgSupport import Operation
 from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
@@ -31,8 +30,3 @@ def borg_regular_command() -> BorgRegularCommand:
 @pytest.fixture
 def borg_logged_command() -> BorgLoggedCommand:
     return BorgLoggedCommand()
-
-
-@pytest.fixture
-def operation() -> Operation:
-    return Operation(progress_file="/tmp/progress_file.txt")
