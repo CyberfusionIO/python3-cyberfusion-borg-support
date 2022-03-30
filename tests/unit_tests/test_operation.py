@@ -1,3 +1,5 @@
+import pytest
+
 from cyberfusion.BorgSupport import (
     ArchiveProgressLine,
     Operation,
@@ -6,12 +8,20 @@ from cyberfusion.BorgSupport import (
 )
 
 
-def test_operation_attributes(operation: Operation) -> None:
+def test_operation_attributes() -> None:
+    """Test operation attributes."""
+
+    # Get operation
+
+    operation = Operation(
+        progress_file="/tmp/progress_file_with_known_types.txt"
+    )
+
     # Test progress_file
 
-    assert operation.progress_file == "/tmp/progress_file.txt"
+    assert operation.progress_file == "/tmp/progress_file_with_known_types.txt"
 
-    # Test _lines
+    # Test lines
 
     assert len(operation._lines) == 12
 
@@ -50,3 +60,25 @@ def test_operation_attributes(operation: Operation) -> None:
     # Test last_line is last line
 
     assert operation.last_line == operation._lines[-1]
+
+
+def test_operation_unknown_types_error() -> None:
+    """Test operation with progress file with unknown types raises error."""
+    with pytest.raises(Exception):
+        Operation(progress_file="/tmp/progress_file_with_unknown_types.txt")
+
+
+def test_operation_no_lines() -> None:
+    """Test operation with progress file with no lines has no lines."""
+
+    # Get operation
+
+    operation = Operation(progress_file="/tmp/progress_file_with_no_lines.txt")
+
+    # Test lines is empty
+
+    assert not operation._lines
+
+    # Test last_line is None (as there are no lines)
+
+    assert operation.last_line is None

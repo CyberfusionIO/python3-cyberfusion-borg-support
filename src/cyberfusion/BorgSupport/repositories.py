@@ -58,17 +58,31 @@ class Repository:
 
     def create(self, *, encryption: BorgRepositoryEncryptionName) -> None:
         """Create repository."""
+
+        # Construct arguments
+
+        arguments = [f"--encryption={encryption}", self.path]
+
+        # Execute command
+
         BorgRegularCommand().execute(
             command=BorgCommand.SUBCOMMAND_INIT,
-            arguments=[f"--encryption={encryption}", self.path],
+            arguments=arguments,
             **self._safe_cli_options,
         )
 
     def delete(self) -> None:
         """Delete repository."""
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
         BorgRegularCommand().execute(
             command=BorgCommand.SUBCOMMAND_DELETE,
-            arguments=[self.path],
+            arguments=arguments,
             **self._dangerous_cli_options,
         )
 
@@ -94,10 +108,17 @@ class Repository:
         Returns compressed size, as this is closest to the size on disk and therefore
         the most relevant number.
         """
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
         command = BorgRegularCommand()
         command.execute(
             command=BorgCommand.SUBCOMMAND_INFO,
-            arguments=[self.path],
+            arguments=arguments,
             json_format=True,
             **self._safe_cli_options,
         )
@@ -109,10 +130,16 @@ class Repository:
         """Get names of archives in repository."""
         results = []
 
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
         command = BorgRegularCommand()
         command.execute(
             command=BorgCommand.SUBCOMMAND_LIST,
-            arguments=[self.path],
+            arguments=arguments,
             json_format=True,
             **self._safe_cli_options,
         )
@@ -127,10 +154,17 @@ class Repository:
 
         Returns False in case issues were found.
         """
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
         try:
             BorgRegularCommand().execute(
                 command=BorgCommand.SUBCOMMAND_CHECK,
-                arguments=[self.path],
+                arguments=arguments,
                 **self._safe_cli_options,
             )
         except CommandNonZeroError:
