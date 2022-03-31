@@ -2,10 +2,21 @@
 
 from enum import Enum
 from typing import Dict, List, Optional, Union
+from urllib.parse import urlparse
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
+from cyberfusion.BorgSupport.exceptions import (
+    RepositoryNotLocalError,
+    RepositoryPathInvalidError,
+)
 from cyberfusion.Common.Command import CommandNonZeroError
+from cyberfusion.Common.Filesystem import get_directory_size
+
+SCHEME_SSH = "ssh"
+DEFAULT_PORT_SSH = 22
+
+CHARACTER_AT = "@"
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -25,9 +36,41 @@ class Repository:
         identity_file_path: Optional[str] = None,
     ) -> None:
         """Set variables."""
-        self.path = path
+        self._path = path
         self.passphrase = passphrase
         self.identity_file_path = identity_file_path
+
+    @property
+    def path(self) -> str:
+        """Get repository path.
+
+        Path can be one of two things:
+
+        - Local: directory on the local filesystem
+        - Remote: URI that starts with 'ssh://'
+
+        More information: https://borgbackup.readthedocs.io/en/stable/usage/general.html#repository-urls
+        """
+
+        # Borg also supports a scheme-less and portless URI, which defaults to
+        # 'ssh://' on port 22. Such a URI is not allowed because it makes it
+        # harder to detect if we're dealing with a local or remote repository.
+        # Clients of this library may use the constants Repository.SCHEME_SSH
+        # and Repository.DEFAULT_PORT_SSH to create a valid URI.
+        #
+        # When the URI contains '@', but no scheme, this is a scheme-less and
+        # portless URI.
+        # E.g.: 'user@host:/path/to/repo' -> 'ssh://user@host:port/path/to/repo'
+
+        if CHARACTER_AT in self._path and not urlparse(self._path).scheme:
+            raise RepositoryPathInvalidError
+
+        return self._path
+
+    @property
+    def _is_remote(self) -> bool:
+        """Get if repository is remote."""
+        return urlparse(self.path).scheme == SCHEME_SSH
 
     @property
     def _safe_cli_options(
@@ -105,25 +148,19 @@ class Repository:
     def size(self) -> int:
         """Get size of repository in bytes.
 
-        Returns compressed size, as this is closest to the size on disk and therefore
-        the most relevant number.
+        This method calculates the size of the repository directory on disk.
+        Therefore, it must be run on a machine that has filesystem access to
+        the repository directory. This is usually only the Borg server.
+
+        More information: https://github.com/borgbackup/borg/discussions/6509
         """
 
-        # Construct arguments
+        # Directory size can only be retrieved when repository on local filesystem
 
-        arguments = [self.path]
+        if self._is_remote:
+            raise RepositoryNotLocalError
 
-        # Execute command
-
-        command = BorgRegularCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_INFO,
-            arguments=arguments,
-            json_format=True,
-            **self._safe_cli_options,
-        )
-
-        return command.stdout["cache"]["stats"]["total_csize"]
+        return get_directory_size(self.path)
 
     @property
     def archives(self) -> List[Archive]:

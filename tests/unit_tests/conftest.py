@@ -14,7 +14,10 @@ def repository() -> Repository:
 
 @pytest.fixture(scope="session")
 def repository_init() -> Repository:
-    """Already initted repository."""
+    """Already initted repository.
+
+    Size of empty repository is 42345 bytes.
+    """
     repository = Repository(path="/tmp/anotherbackup", passphrase="test")
 
     repository.create(encryption="keyfile-blake2")
