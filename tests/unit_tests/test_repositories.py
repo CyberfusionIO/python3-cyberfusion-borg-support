@@ -34,8 +34,10 @@ def test_repository_attributes(repository: Repository) -> None:
 
 
 def test_repository_attributes_remote_without_scheme() -> None:
+    repository = Repository(path="user@host:/path/to/repo", passphrase="test")
+
     with pytest.raises(RepositoryPathInvalidError):
-        Repository(path="user@host:/path/to/repo", passphrase="test")
+        repository.path
 
 
 def test_repository_attributes_remote_with_scheme() -> None:
@@ -52,6 +54,16 @@ def test_repository_attributes_local() -> None:
 
     assert repository.path == "/tmp/testing"
     assert not repository._is_remote
+
+
+def test_repository_remote_size() -> None:
+    """Test getting size for remote repository raises error."""
+    repository = Repository(
+        path="ssh://user@host:22/path/to/repo", passphrase="test"
+    )
+
+    with pytest.raises(RepositoryNotLocalError):
+        repository.size
 
 
 @pytest.mark.order(2)
