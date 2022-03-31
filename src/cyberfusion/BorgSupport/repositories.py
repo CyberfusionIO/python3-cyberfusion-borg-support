@@ -12,6 +12,8 @@ from cyberfusion.Common.Filesystem import get_directory_size
 SCHEME_SSH = "ssh"
 DEFAULT_PORT_SSH = 22
 
+CHARACTER_AT = "@"
+
 
 class BorgRepositoryEncryptionName(Enum):
     """Repository encryption names."""
@@ -56,10 +58,15 @@ class Repository:
         # portless URI.
         # E.g.: 'user@host:/path/to/repo' -> 'ssh://user@host:port/path/to/repo'
 
-        if "@" in self._path and not urlparse(self._path).scheme:
+        if CHARACTER_AT in self._path and not urlparse(self._path).scheme:
             raise ValueError
 
         return self._path
+
+    @property
+    def _is_remote(self) -> bool:
+        """Get if repository is remote."""
+        return urlparse(self.path).scheme == SCHEME_SSH
 
     @property
     def _safe_cli_options(
@@ -143,6 +150,12 @@ class Repository:
 
         More information: https://github.com/borgbackup/borg/discussions/6509
         """
+
+        # Directory size can only be retrieved when repository on local filesystem
+
+        if self._is_remote:
+            raise RepositoryNotLocalError
+
         return get_directory_size(self.path)
 
     @property
