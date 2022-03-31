@@ -1,3 +1,14 @@
+python-cyberfusion-borg-support (1.1.1) unstable; urgency=low
+
+  - Get size of repository directory to determine Repository.size
+  - Add Repository.path attribute with validation for unsupported
+    protocol-less and portless URI
+  - Add Repository._is_remote attribute
+  - Add exceptions module
+  - Move operation classes to own module
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Thu, 31 Mar 2022 16:18:00 +0200
+
 python-cyberfusion-borg-support (1.1) unstable; urgency=low
 
   - Add Archive.contents
