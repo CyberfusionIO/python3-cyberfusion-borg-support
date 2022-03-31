@@ -2,11 +2,15 @@
 
 from enum import Enum
 from typing import Dict, List, Optional, Union
+from urllib.parse import urlparse
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
 from cyberfusion.Common.Command import CommandNonZeroError
 from cyberfusion.Common.Filesystem import get_directory_size
+
+SCHEME_SSH = "ssh"
+DEFAULT_PORT_SSH = 22
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -26,9 +30,36 @@ class Repository:
         identity_file_path: Optional[str] = None,
     ) -> None:
         """Set variables."""
-        self.path = path
+        self._path = path
         self.passphrase = passphrase
         self.identity_file_path = identity_file_path
+
+    @property
+    def path(self) -> str:
+        """Get repository path.
+
+        Path can be one of two things:
+
+        - Local: directory on the local filesystem
+        - Remote: URI that starts with 'ssh://'
+
+        More information: https://borgbackup.readthedocs.io/en/stable/usage/general.html#repository-urls
+        """
+
+        # Borg also supports a scheme-less and portless URI, which defaults to
+        # 'ssh://' on port 22. Such a URI is not allowed because it makes it
+        # harder to detect if we're dealing with a local or remote repository.
+        # Clients of this library may use the constants Repository.SCHEME_SSH
+        # and Repository.DEFAULT_PORT_SSH to create a valid URI.
+        #
+        # When the URI contains '@', but no scheme, this is a scheme-less and
+        # portless URI.
+        # E.g.: 'user@host:/path/to/repo' -> 'ssh://user@host:port/path/to/repo'
+
+        if "@" in self._path and not urlparse(self._path).scheme:
+            raise ValueError
+
+        return self._path
 
     @property
     def _safe_cli_options(

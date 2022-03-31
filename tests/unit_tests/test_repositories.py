@@ -25,9 +25,30 @@ def test_repository_dangerous_cli_options(repository: Repository) -> None:
 
 
 def test_repository_attributes(repository: Repository) -> None:
-    assert repository.path == "/tmp/backup"
+    assert repository._path == "/tmp/backup"
     assert repository.passphrase == "test"
     assert repository.identity_file_path is None
+
+
+def test_repository_path_attribute_remote_without_scheme() -> None:
+    with pytest.raises(ValueError):
+        Repository(path="user@host:/path/to/repo", passphrase="test")
+
+
+def test_repository_path_attribute_remote_with_scheme() -> None:
+    assert (
+        Repository(
+            path="ssh://user@host:22/path/to/repo", passphrase="test"
+        ).path
+        == "ssh://user@host:22/path/to/repo"
+    )
+
+
+def test_repository_path_attribute_local() -> None:
+    assert (
+        Repository(path="/tmp/testing", passphrase="test").path
+        == "/tmp/testing"
+    )
 
 
 @pytest.mark.order(2)
