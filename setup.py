@@ -12,6 +12,7 @@ setup(
     license="Closed",
     packages=[
         "cyberfusion.BorgSupport",
+        "cyberfusion.BorgSupport.exceptions",
     ],
     package_dir={"": "src"},
     platforms=["linux"],

@@ -6,6 +6,10 @@ from urllib.parse import urlparse
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
+from cyberfusion.BorgSupport.exceptions import (
+    RepositoryNotLocalError,
+    RepositoryPathInvalidError,
+)
 from cyberfusion.Common.Command import CommandNonZeroError
 from cyberfusion.Common.Filesystem import get_directory_size
 
@@ -59,7 +63,7 @@ class Repository:
         # E.g.: 'user@host:/path/to/repo' -> 'ssh://user@host:port/path/to/repo'
 
         if CHARACTER_AT in self._path and not urlparse(self._path).scheme:
-            raise ValueError
+            raise RepositoryPathInvalidError
 
         return self._path
 

@@ -6,6 +6,7 @@ from cyberfusion.BorgSupport import (
     ProgressMessageLine,
     ProgressPercentLine,
 )
+from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
 
 
 def test_operation_attributes() -> None:
@@ -64,7 +65,7 @@ def test_operation_attributes() -> None:
 
 def test_operation_unknown_types_error() -> None:
     """Test operation with progress file with unknown types raises error."""
-    with pytest.raises(Exception):
+    with pytest.raises(OperationLineNotImplementedError):
         Operation(progress_file="/tmp/progress_file_with_unknown_types.txt")
 
 

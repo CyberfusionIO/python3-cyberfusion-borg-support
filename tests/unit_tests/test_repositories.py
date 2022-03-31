@@ -3,6 +3,10 @@ import shutil
 
 import pytest
 
+from cyberfusion.BorgSupport.exceptions import (
+    RepositoryNotLocalError,
+    RepositoryPathInvalidError,
+)
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common.Command import CommandNonZeroError
 
@@ -25,14 +29,12 @@ def test_repository_dangerous_cli_options(repository: Repository) -> None:
 
 
 def test_repository_attributes(repository: Repository) -> None:
-    assert repository._path == "/tmp/backup"
-    assert not repository._is_remote_repository
     assert repository.passphrase == "test"
     assert repository.identity_file_path is None
 
 
 def test_repository_attributes_remote_without_scheme() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(RepositoryPathInvalidError):
         Repository(path="user@host:/path/to/repo", passphrase="test")
 
 

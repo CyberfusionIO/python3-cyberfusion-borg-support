@@ -4,6 +4,8 @@ import json
 from enum import Enum
 from typing import List, Optional, Union
 
+from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
+
 
 class JSONLineType(Enum):
     """JSON line types."""
@@ -87,7 +89,7 @@ class Operation:
                     lines.append(ProgressPercentLine(line))
 
                 else:
-                    raise Exception(
+                    raise OperationLineNotImplementedError(
                         f"Got unknown line of type '{line['type']}': '{line}'"
                     )
 
