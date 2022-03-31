@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Union
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
 from cyberfusion.Common.Command import CommandNonZeroError
+from cyberfusion.Common.Filesystem import get_directory_size
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -105,25 +106,13 @@ class Repository:
     def size(self) -> int:
         """Get size of repository in bytes.
 
-        Returns compressed size, as this is closest to the size on disk and therefore
-        the most relevant number.
+        This method calculates the size of the repository directory on disk.
+        Therefore, it must be run on a machine that has filesystem access to
+        the repository directory. This is usually only the Borg server.
+
+        More information: https://github.com/borgbackup/borg/discussions/6509
         """
-
-        # Construct arguments
-
-        arguments = [self.path]
-
-        # Execute command
-
-        command = BorgRegularCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_INFO,
-            arguments=arguments,
-            json_format=True,
-            **self._safe_cli_options,
-        )
-
-        return command.stdout["cache"]["stats"]["total_csize"]
+        return get_directory_size(self.path)
 
     @property
     def archives(self) -> List[Archive]:

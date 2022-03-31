@@ -7,6 +7,6 @@ Standards-Version: 4.3.0
 
 Package: python-cyberfusion-borg-support
 Architecture: all
-Depends: python3, python-cyberfusion-common (>= 2.8), ${misc:Depends}
+Depends: python3, python-cyberfusion-common (>= 2.8.1), ${misc:Depends}
 Description: BorgSupport Python library/tools
  BorgSupport allows for basic management of Borg installations.

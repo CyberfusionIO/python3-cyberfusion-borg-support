@@ -50,7 +50,7 @@ def test_archive_setup(repository: Repository) -> None:
 
     # Test repository empty
 
-    assert repository.size == 0
+    assert repository.size == 42345
 
     # Create archive
 
@@ -65,7 +65,7 @@ def test_archive_setup(repository: Repository) -> None:
 
     # Test repository not empty
 
-    assert repository.size != 0
+    assert repository.size != 42345
 
     # Test we can't create existing archive again
 

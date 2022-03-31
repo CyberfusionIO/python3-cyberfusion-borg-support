@@ -46,7 +46,7 @@ def test_repository_setup_teardown(repository: Repository) -> None:
     # Test repository empty
 
     assert not repository.archives
-    assert repository.size == 0
+    assert repository.size == 42345
 
     # Test repository created
 
