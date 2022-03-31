@@ -5,12 +5,12 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
 
-from cyberfusion.BorgSupport import Operation
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
     BorgLoggedCommand,
     BorgRegularCommand,
 )
+from cyberfusion.BorgSupport.operations import Operation
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository

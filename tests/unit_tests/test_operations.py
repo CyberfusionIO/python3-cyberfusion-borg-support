@@ -1,12 +1,12 @@
 import pytest
 
-from cyberfusion.BorgSupport import (
+from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
+from cyberfusion.BorgSupport.operations import (
     ArchiveProgressLine,
     Operation,
     ProgressMessageLine,
     ProgressPercentLine,
 )
-from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
 
 
 def test_operation_attributes() -> None:
