@@ -55,11 +55,15 @@ class BorgRegularCommand:
         if json_format:
             self.command.append("--json")
 
-        # If identity file, set StrictHostKeyChecking and identity file
+        # When connecting over SSH, set:
+        #
+        # - BatchMode (see https://borgbackup.readthedocs.io/en/stable/usage/notes.html?highlight=borg%20serve#ssh-batch-mode)
+        # - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
+        # - Path to identity file path
 
         if identity_file_path:
             self.command.append(
-                f"--rsh='ssh -o StrictHostKeyChecking=no -i {identity_file_path}'",
+                f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'",
             )
 
         # Add arguments
@@ -119,11 +123,15 @@ class BorgLoggedCommand:
             command,
         ]
 
-        # If identity file, set StrictHostKeyChecking and identity file
+        # When connecting over SSH, set:
+        #
+        # - BatchMode (see https://borgbackup.readthedocs.io/en/stable/usage/notes.html?highlight=borg%20serve#ssh-batch-mode)
+        # - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
+        # - Path to identity file path
 
         if identity_file_path:
             self.command.append(
-                f"--rsh='ssh -o StrictHostKeyChecking=no -i {identity_file_path}'",
+                f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'",
             )
 
         # Add arguments
