@@ -25,6 +25,18 @@ class BorgCommand:
     SUBCOMMAND_CREATE = "create"
 
 
+def _get_rsh_argument(identity_file_path: str) -> str:
+    """Get value of '--rsh' argument for Borg CLI commands.
+
+    When connecting over SSH, set:
+
+    - BatchMode (see https://borgbackup.readthedocs.io/en/stable/usage/notes.html?highlight=borg%20serve#ssh-batch-mode)
+    - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
+    - Path to identity file
+    """
+    return f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'"
+
+
 class BorgRegularCommand:
     """Abstract Borg CLI implementation for use in scripts."""
 
@@ -55,18 +67,10 @@ class BorgRegularCommand:
         if json_format:
             self.command.append("--json")
 
-        # When connecting over SSH, set:
-        #
-        # - BatchMode (see https://borgbackup.readthedocs.io/en/stable/usage/notes.html?highlight=borg%20serve#ssh-batch-mode)
-        # - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
-        # - Path to identity file path
+        # Add arguments
 
         if identity_file_path:
-            self.command.append(
-                f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'",
-            )
-
-        # Add arguments
+            self.command.append(_get_rsh_argument(identity_file_path))
 
         if arguments is not None:
             self.command.extend(arguments)
@@ -123,18 +127,10 @@ class BorgLoggedCommand:
             command,
         ]
 
-        # When connecting over SSH, set:
-        #
-        # - BatchMode (see https://borgbackup.readthedocs.io/en/stable/usage/notes.html?highlight=borg%20serve#ssh-batch-mode)
-        # - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
-        # - Path to identity file path
+        # Add arguments
 
         if identity_file_path:
-            self.command.append(
-                f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'",
-            )
-
-        # Add arguments
+            self.command.append(_get_rsh_argument(identity_file_path))
 
         self.command.extend(arguments)
 

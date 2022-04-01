@@ -38,7 +38,10 @@ class Repository:
         passphrase_file: str,
         identity_file_path: Optional[str] = None,
     ) -> None:
-        """Set variables."""
+        """Set variables.
+
+        Set 'identity_file_path' only when the repository is remote.
+        """
         self._path = path
         self._passphrase_file = passphrase_file
         self.identity_file_path = identity_file_path
