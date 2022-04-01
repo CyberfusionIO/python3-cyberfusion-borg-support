@@ -1,5 +1,6 @@
 """Classes for managing repositories."""
 
+import os
 from enum import Enum
 from typing import Dict, List, Optional, Union
 from urllib.parse import urlparse
@@ -10,13 +11,15 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
-from cyberfusion.Common.Command import CommandNonZeroError
+from cyberfusion.Common.Command import CommandNonZeroError, CyberfusionCommand
 from cyberfusion.Common.Filesystem import get_directory_size
 
 SCHEME_SSH = "ssh"
 DEFAULT_PORT_SSH = 22
 
 CHARACTER_AT = "@"
+
+CAT_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "cat")
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -32,13 +35,21 @@ class Repository:
         self,
         *,
         path: str,
-        passphrase: str,
+        passphrase_file: str,
         identity_file_path: Optional[str] = None,
     ) -> None:
-        """Set variables."""
+        """Set variables.
+
+        Set 'identity_file_path' only when the repository is remote.
+        """
         self._path = path
-        self.passphrase = passphrase
+        self._passphrase_file = passphrase_file
         self.identity_file_path = identity_file_path
+
+    @property
+    def passcommand(self) -> str:
+        """Get passcommand which reads passphrase from passphrase file."""
+        return " ".join([CAT_BIN, self._passphrase_file])
 
     @property
     def path(self) -> str:
@@ -76,9 +87,16 @@ class Repository:
     def _safe_cli_options(
         self,
     ) -> Dict[str, Union[Optional[str], Dict[str, str]]]:
-        """Get safe CLI options for Borg command."""
+        """Get safe CLI options for Borg command.
+
+        The passphrase is retrieved by passing a command to BORG_PASSCOMMAND. This
+        is used instead of BORG_PASSPHRASE in order to to prevent the passphrase
+        from showing up in the environment variables. See:
+
+        https://borgbackup.readthedocs.io/en/stable/faq.html#how-can-i-specify-the-encryption-passphrase-programmatically
+        """
         return {
-            "environment": {"BORG_PASSPHRASE": self.passphrase},
+            "environment": {"BORG_PASSCOMMAND": self.passcommand},
             "identity_file_path": self.identity_file_path,
         }
 
@@ -93,7 +111,7 @@ class Repository:
         """
         return {
             "environment": {
-                "BORG_PASSPHRASE": self.passphrase,
+                "BORG_PASSCOMMAND": self.passcommand,
                 "BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES",
             },
             "identity_file_path": self.identity_file_path,

@@ -1,3 +1,10 @@
+python-cyberfusion-borg-support (1.1.2) unstable; urgency=low
+
+  - Use BORG_PASSCOMMAND instead of BORG_PASSPHRASE to pass passphrase
+  - Set BatchMode for SSH connections
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 1 Apr 2022 14:14:00 +0200
+
 python-cyberfusion-borg-support (1.1.1) unstable; urgency=low
 
   - Get size of repository directory to determine Repository.size

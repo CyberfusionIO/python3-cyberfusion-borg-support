@@ -6,6 +6,7 @@ import pytest
 from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
+    _get_rsh_argument,
 )
 from cyberfusion.BorgSupport.repositories import Repository
 
@@ -76,6 +77,13 @@ def test_borg_regular_command_json(
     assert borg_regular_command.command == ["/usr/bin/borg", "info", "--json"]
 
 
+def test_get_rsh_argument() -> None:
+    assert (
+        _get_rsh_argument("/tmp/test.key")
+        == "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'"
+    )
+
+
 def test_borg_regular_command_identity_file_path(
     borg_regular_command: BorgRegularCommand,
 ) -> None:
@@ -86,7 +94,7 @@ def test_borg_regular_command_identity_file_path(
     assert borg_regular_command.command == [
         "/usr/bin/borg",
         "info",
-        "--rsh='ssh -o StrictHostKeyChecking=no -i /tmp/test.key'",
+        "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'",
     ]
 
 
@@ -113,7 +121,7 @@ def test_borg_logged_command_identity_file_path(
         "--progress",
         "--log-json",
         "create",
-        "--rsh='ssh -o StrictHostKeyChecking=no -i /tmp/test.key'",
+        "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'",
         "/tmp/anotherbackup::testarchivename",
         "/root",
     ]
