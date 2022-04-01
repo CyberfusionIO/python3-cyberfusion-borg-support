@@ -13,7 +13,7 @@ from cyberfusion.Common.Command import CommandNonZeroError
 
 def test_repository_safe_cli_options(repository: Repository) -> None:
     assert repository._safe_cli_options == {
-        "environment": {"BORG_PASSPHRASE": "test"},
+        "environment": {"BORG_PASSCOMMAND": "/bin/cat /tmp/testingpassphrase"},
         "identity_file_path": None,
     }
 
@@ -21,7 +21,7 @@ def test_repository_safe_cli_options(repository: Repository) -> None:
 def test_repository_dangerous_cli_options(repository: Repository) -> None:
     assert repository._dangerous_cli_options == {
         "environment": {
-            "BORG_PASSPHRASE": "test",
+            "BORG_PASSCOMMAND": "/bin/cat /tmp/testingpassphrase",
             "BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES",
         },
         "identity_file_path": None,
@@ -29,37 +29,46 @@ def test_repository_dangerous_cli_options(repository: Repository) -> None:
 
 
 def test_repository_attributes(repository: Repository) -> None:
-    assert repository.passphrase == "test"
+    assert repository._passphrase_file == "/tmp/testingpassphrase"
+    assert repository.passcommand == "/bin/cat /tmp/testingpassphrase"
     assert repository.identity_file_path is None
 
 
-def test_repository_attributes_remote_without_scheme() -> None:
-    repository = Repository(path="user@host:/path/to/repo", passphrase="test")
+def test_repository_attributes_remote_without_scheme(
+    passphrase_file: str,
+) -> None:
+    repository = Repository(
+        path="user@host:/path/to/repo", passphrase_file=passphrase_file
+    )
 
     with pytest.raises(RepositoryPathInvalidError):
         repository.path
 
 
-def test_repository_attributes_remote_with_scheme() -> None:
+def test_repository_attributes_remote_with_scheme(
+    passphrase_file: str,
+) -> None:
     repository = Repository(
-        path="ssh://user@host:22/path/to/repo", passphrase="test"
+        path="ssh://user@host:22/path/to/repo", passphrase_file=passphrase_file
     )
 
     assert repository.path == "ssh://user@host:22/path/to/repo"
     assert repository._is_remote
 
 
-def test_repository_attributes_local() -> None:
-    repository = Repository(path="/tmp/testing", passphrase="test")
+def test_repository_attributes_local(passphrase_file: str) -> None:
+    repository = Repository(
+        path="/tmp/testing", passphrase_file=passphrase_file
+    )
 
     assert repository.path == "/tmp/testing"
     assert not repository._is_remote
 
 
-def test_repository_remote_size() -> None:
+def test_repository_remote_size(passphrase_file: str) -> None:
     """Test getting size for remote repository raises error."""
     repository = Repository(
-        path="ssh://user@host:22/path/to/repo", passphrase="test"
+        path="ssh://user@host:22/path/to/repo", passphrase_file=passphrase_file
     )
 
     with pytest.raises(RepositoryNotLocalError):
