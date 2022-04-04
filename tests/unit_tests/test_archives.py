@@ -39,7 +39,7 @@ def test_archive_setup(repository: Repository) -> None:
 
     archive = Archive(repository=repository, name=name, comment=comment)
 
-    # Test archive name
+    # Test attributes
 
     assert archive.repository == repository
     assert archive._name == name
