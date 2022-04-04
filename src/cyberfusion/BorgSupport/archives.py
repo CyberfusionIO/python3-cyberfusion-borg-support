@@ -1,6 +1,7 @@
 """Classes for managing archives."""
 
 import json
+import os
 from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, List, Optional
@@ -142,10 +143,14 @@ class FilesystemObject:
 class Archive:
     """Abstraction of Borg archive."""
 
-    def __init__(self, *, repository: "Repository", name: str) -> None:
+    def __init__(
+        self, *, repository: "Repository", name: str, comment: str
+    ) -> None:
         """Set variables."""
         self.repository = repository
+
         self._name = name
+        self._comment = comment
 
     @property
     def name(self) -> str:
@@ -154,6 +159,14 @@ class Archive:
         Borg needs this format to identify the repository and archive.
         """
         return self.repository.path + "::" + self._name
+
+    @property
+    def comment(self) -> str:
+        """Get archive comment.
+
+        This is a free-form attribute.
+        """
+        return self._comment
 
     def contents(self, *, path: Optional[str]) -> List[FilesystemObject]:
         """Get contents of archive.
@@ -191,15 +204,39 @@ class Archive:
 
         return results
 
-    def create(self, *, paths: List[str], excludes: List[str]) -> Operation:
+    def create(
+        self,
+        *,
+        paths: List[str],
+        excludes: List[str],
+        working_directory: str = os.path.sep,
+    ) -> Operation:
         """Create archive.
 
-        Excludes use the default pattern for --exclude, Fnmatch. See https://borgbackup.readthedocs.io/en/stable/usage/help.html
+        For excludes, see https://borgbackup.readthedocs.io/en/stable/usage/help.html
+
+        When creating a Borg archive, all paths are included, starting from the
+        working directory.
+
+        E.g. if `borg create` runs in the working directory `/`, and the path
+        `/home/test/domains` is included in the archive, the archive contains
+        the directory structure `home/test/domains/`.
+
+        E.g. if `borg create` runs in the working directory `/home/test`, and
+        the path `domains` is included in the archive, the archive contains the
+        directory structure `domains/`.
+
+        From https://borgbackup.readthedocs.io/en/stable/usage/create.html#borg-create
+
+        > This command creates a backup archive containing all files found while
+        > recursively traversing all paths specified. Paths are added to the
+        > archive as they are given, that means if relative paths are desired,
+        > the command has to be run from the correct directory.
         """
 
         # Construct arguments
 
-        arguments = ["--one-file-system"]
+        arguments = ["--one-file-system", f"--comment='{self.comment}'"]
 
         for exclude in excludes:
             arguments.append(f"--exclude={exclude}")
@@ -213,6 +250,7 @@ class Archive:
         command.execute(
             command=BorgCommand.SUBCOMMAND_CREATE,
             arguments=arguments,
+            working_directory=working_directory,
             **self.repository._safe_cli_options,
         )
 

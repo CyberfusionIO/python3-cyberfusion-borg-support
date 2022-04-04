@@ -1,3 +1,10 @@
+python-cyberfusion-borg-support (1.1.3) unstable; urgency=low
+
+  - Add Archive.comment and pass in Archive.create
+  - Add working_directory to Archive.create
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Mon, 4 Apr 2022 21:58:00 +0200
+
 python-cyberfusion-borg-support (1.1.2) unstable; urgency=low
 
   - Use BORG_PASSCOMMAND instead of BORG_PASSPHRASE to pass passphrase

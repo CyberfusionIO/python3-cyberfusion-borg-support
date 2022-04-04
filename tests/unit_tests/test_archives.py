@@ -12,6 +12,7 @@ def test_archive_setup(repository: Repository) -> None:
     """Test creating archive, and repository prune, size, archives and extract."""
 
     name = "test"
+    comment = "Free-form comment!"
     NAME_ARCHIVE = "/tmp/backup::test"
 
     # Create directories and files to test archive extract and contents
@@ -36,13 +37,15 @@ def test_archive_setup(repository: Repository) -> None:
 
     # Set archive
 
-    archive = Archive(repository=repository, name=name)
+    archive = Archive(repository=repository, name=name, comment=comment)
 
-    # Test archive name
+    # Test attributes
 
     assert archive.repository == repository
     assert archive._name == name
+    assert archive._comment == comment
     assert archive.name == NAME_ARCHIVE
+    assert archive.comment == comment
 
     # Test archive does not exist at first
 
