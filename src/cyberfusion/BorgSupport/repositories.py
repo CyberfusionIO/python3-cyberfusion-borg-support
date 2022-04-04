@@ -187,7 +187,7 @@ class Repository:
 
         # Construct arguments
 
-        arguments = [self.path]
+        arguments = [self.path, "--format='{comment}'"]
 
         # Execute command
 
@@ -200,7 +200,13 @@ class Repository:
         )
 
         for archive in command.stdout["archives"]:
-            results.append(Archive(repository=self, name=archive["name"]))
+            results.append(
+                Archive(
+                    repository=self,
+                    name=archive["name"],
+                    comment=archive["comment"],
+                )
+            )
 
         return results
 

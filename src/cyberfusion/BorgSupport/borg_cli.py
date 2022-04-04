@@ -15,7 +15,6 @@ class BorgCommand:
 
     BORG_BIN = os.path.join(CyberfusionCommand.PATH_USR_BIN, "borg")
 
-    SUBCOMMAND_INFO = "info"
     SUBCOMMAND_DELETE = "delete"
     SUBCOMMAND_PRUNE = "prune"
     SUBCOMMAND_LIST = "list"

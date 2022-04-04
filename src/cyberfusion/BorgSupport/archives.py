@@ -143,10 +143,14 @@ class FilesystemObject:
 class Archive:
     """Abstraction of Borg archive."""
 
-    def __init__(self, *, repository: "Repository", name: str) -> None:
+    def __init__(
+        self, *, repository: "Repository", name: str, comment: str
+    ) -> None:
         """Set variables."""
         self.repository = repository
+
         self._name = name
+        self._comment = comment
 
     @property
     def name(self) -> str:
@@ -155,6 +159,14 @@ class Archive:
         Borg needs this format to identify the repository and archive.
         """
         return self.repository.path + "::" + self._name
+
+    @property
+    def comment(self) -> str:
+        """Get archive comment.
+
+        This is a free-form attribute.
+        """
+        return self._comment
 
     def contents(self, *, path: Optional[str]) -> List[FilesystemObject]:
         """Get contents of archive.
@@ -224,7 +236,7 @@ class Archive:
 
         # Construct arguments
 
-        arguments = ["--one-file-system"]
+        arguments = ["--one-file-system", f"--comment='{self.comment}'"]
 
         for exclude in excludes:
             arguments.append(f"--exclude={exclude}")
