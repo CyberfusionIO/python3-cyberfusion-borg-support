@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
@@ -144,7 +144,11 @@ class Archive:
     """Abstraction of Borg archive."""
 
     def __init__(
-        self, *, repository: "Repository", name: str, comment: str
+        self,
+        *,
+        repository: "Repository",
+        name: str,
+        comment: str,
     ) -> None:
         """Set variables."""
         self.repository = repository
@@ -236,10 +240,10 @@ class Archive:
 
         # Construct arguments
 
-        arguments = ["--one-file-system", f"--comment='{self.comment}'"]
+        arguments = ["--one-file-system", "--comment", self.comment]
 
         for exclude in excludes:
-            arguments.append(f"--exclude={exclude}")
+            arguments.extend(["--exclude", exclude])
 
         arguments.append(self.name)
         arguments.extend(paths)
@@ -258,7 +262,7 @@ class Archive:
 
     def extract(
         self, *, destination_path: str, restore_paths: List[str]
-    ) -> None:
+    ) -> Tuple[Operation, str]:
         """Extract paths in archive to destination."""
 
         # Construct arguments
@@ -276,4 +280,4 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
-        return Operation(progress_file=command.file)
+        return Operation(progress_file=command.file), destination_path
