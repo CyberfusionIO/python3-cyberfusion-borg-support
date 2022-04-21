@@ -24,7 +24,7 @@ class BorgCommand:
     SUBCOMMAND_CREATE = "create"
 
 
-def _get_rsh_argument(identity_file_path: str) -> str:
+def _get_rsh_argument(identity_file_path: str) -> List[str]:
     """Get value of '--rsh' argument for Borg CLI commands.
 
     When connecting over SSH, set:
@@ -33,7 +33,10 @@ def _get_rsh_argument(identity_file_path: str) -> str:
     - StrictHostKeyChecking, as host is unknown on first run, so non-interactive scripts would block otherwise
     - Path to identity file
     """
-    return f"--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}'"
+    return [
+        "--rsh",
+        f"ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i {identity_file_path}",
+    ]
 
 
 class BorgRegularCommand:
@@ -69,7 +72,7 @@ class BorgRegularCommand:
         # Add arguments
 
         if identity_file_path:
-            self.command.append(_get_rsh_argument(identity_file_path))
+            self.command.extend(_get_rsh_argument(identity_file_path))
 
         if arguments is not None:
             self.command.extend(arguments)
@@ -129,7 +132,7 @@ class BorgLoggedCommand:
         # Add arguments
 
         if identity_file_path:
-            self.command.append(_get_rsh_argument(identity_file_path))
+            self.command.extend(_get_rsh_argument(identity_file_path))
 
         self.command.extend(arguments)
 

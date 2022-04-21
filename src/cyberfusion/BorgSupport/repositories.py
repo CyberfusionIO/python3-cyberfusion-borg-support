@@ -182,7 +182,7 @@ class Repository:
 
     @property
     def archives(self) -> List[Archive]:
-        """Get names of archives in repository."""
+        """Get archives in repository."""
         results = []
 
         # Construct arguments

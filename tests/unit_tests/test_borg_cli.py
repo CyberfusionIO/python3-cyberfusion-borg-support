@@ -78,10 +78,10 @@ def test_borg_regular_command_json(
 
 
 def test_get_rsh_argument() -> None:
-    assert (
-        _get_rsh_argument("/tmp/test.key")
-        == "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'"
-    )
+    assert _get_rsh_argument("/tmp/test.key") == [
+        "--rsh",
+        "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
+    ]
 
 
 def test_borg_regular_command_identity_file_path(
@@ -94,7 +94,8 @@ def test_borg_regular_command_identity_file_path(
     assert borg_regular_command.command == [
         "/usr/bin/borg",
         "info",
-        "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'",
+        "--rsh",
+        "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
     ]
 
 
@@ -121,7 +122,8 @@ def test_borg_logged_command_identity_file_path(
         "--progress",
         "--log-json",
         "create",
-        "--rsh='ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key'",
+        "--rsh",
+        "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
         "/tmp/anotherbackup::testarchivename",
         "/root",
     ]

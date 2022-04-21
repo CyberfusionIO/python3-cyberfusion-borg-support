@@ -80,10 +80,14 @@ def test_archive_setup(repository: Repository) -> None:
 
     # Extract archive
 
-    operation = archive.extract(
+    operation, destination_path = archive.extract(
         destination_path="/tmp",
         restore_paths=["tmp/backmeupdir1/", "tmp/backmeupdir2/"],
     )  # Archive created before
+
+    # Test returned destination path is same as input
+
+    assert destination_path == "/tmp"
 
     # Test archive extracted
 
