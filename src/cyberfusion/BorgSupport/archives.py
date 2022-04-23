@@ -281,3 +281,24 @@ class Archive:
         )
 
         return Operation(progress_file=command.file), destination_path
+
+    def export_tar(
+        self, *, destination_path: str, restore_paths: List[str]
+    ) -> Tuple[Operation, str]:
+        """Export archive to tarball."""
+
+        # Construct arguments
+
+        arguments = [self.name, destination_path]
+        arguments.extend(restore_paths)
+
+        # Execute command
+
+        command = BorgLoggedCommand()
+        command.execute(
+            command=BorgCommand.SUBCOMMAND_EXPORT_TAR,
+            arguments=arguments,
+            **self.repository._safe_cli_options,
+        )
+
+        return Operation(progress_file=command.file), destination_path

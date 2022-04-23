@@ -99,6 +99,21 @@ def test_archive_setup(repository: Repository) -> None:
     )
     assert not os.path.exists("/tmp/tmp/backmeupdir1/pleaseexcludeme")
 
+    # Export tarball of archive
+
+    operation, destination_path = archive.export_tar(
+        destination_path="/tmp/mytar.tar.lz4",
+        restore_paths=["tmp/backmeupdir1/", "tmp/backmeupdir2/"],
+    )  # Archive created before
+
+    # Test returned destination path is same as input
+
+    assert destination_path == "/tmp/mytar.tar.lz4"
+
+    # Test tarball exported
+
+    assert os.path.isfile(destination_path)
+
     # Test archive contents from the root
 
     contents = archive.contents(path=None)

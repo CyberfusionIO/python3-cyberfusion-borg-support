@@ -22,6 +22,7 @@ class BorgCommand:
     SUBCOMMAND_EXTRACT = "extract"
     SUBCOMMAND_INIT = "init"
     SUBCOMMAND_CREATE = "create"
+    SUBCOMMAND_EXPORT_TAR = "export-tar"
 
 
 def _get_rsh_argument(identity_file_path: str) -> List[str]:
