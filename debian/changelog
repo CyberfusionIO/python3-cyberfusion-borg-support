@@ -1,3 +1,9 @@
+python-cyberfusion-borg-support (1.2.1) unstable; urgency=low
+
+  - Add strip_components to Archive.export_tar
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Mon, 2 May 2022 17:09:00 +0200
+
 python-cyberfusion-borg-support (1.2) unstable; urgency=low
 
   - Add Archive.export_tar
