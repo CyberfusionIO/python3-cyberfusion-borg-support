@@ -1,4 +1,5 @@
 import os
+import tarfile
 
 import pytest
 
@@ -102,17 +103,28 @@ def test_archive_setup(repository: Repository) -> None:
     # Export tarball of archive
 
     operation, destination_path = archive.export_tar(
-        destination_path="/tmp/mytar.tar.lz4",
+        destination_path="/tmp/mytar.tar.gz",
         restore_paths=["tmp/backmeupdir1/", "tmp/backmeupdir2/"],
+        strip_components=1,
     )  # Archive created before
 
     # Test returned destination path is same as input
 
-    assert destination_path == "/tmp/mytar.tar.lz4"
+    assert destination_path == "/tmp/mytar.tar.gz"
 
     # Test tarball exported
 
     assert os.path.isfile(destination_path)
+
+    # Test tarball contents
+
+    assert tarfile.open("/tmp/mytar.tar.gz").getnames() == [
+        "backmeupdir1",
+        "backmeupdir1/test1.txt",
+        "backmeupdir2",
+        "backmeupdir2/test2.txt",
+        "backmeupdir2/symlink.txt",
+    ]
 
     # Test archive contents from the root
 

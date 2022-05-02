@@ -283,13 +283,21 @@ class Archive:
         return Operation(progress_file=command.file), destination_path
 
     def export_tar(
-        self, *, destination_path: str, restore_paths: List[str]
+        self,
+        *,
+        destination_path: str,
+        restore_paths: List[str],
+        strip_components: int,
     ) -> Tuple[Operation, str]:
         """Export archive to tarball."""
 
         # Construct arguments
 
-        arguments = [self.name, destination_path]
+        arguments = [
+            f"--strip-components={strip_components}",
+            self.name,
+            destination_path,
+        ]
         arguments.extend(restore_paths)
 
         # Execute command
