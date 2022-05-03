@@ -2,8 +2,10 @@
 
 import json
 import os
+import shutil
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from cyberfusion.BorgSupport.borg_cli import (
@@ -12,6 +14,7 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.operations import Operation
+from cyberfusion.Common import generate_random_string
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository
@@ -143,6 +146,8 @@ class FilesystemObject:
 class Archive:
     """Abstraction of Borg archive."""
 
+    PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore"
+
     def __init__(
         self,
         *,
@@ -261,13 +266,22 @@ class Archive:
         return Operation(progress_file=command.file)
 
     def extract(
-        self, *, destination_path: str, restore_paths: List[str]
+        self,
+        *,
+        destination_path: str,
+        restore_paths: List[str],
+        strip_components: Optional[int] = None,
     ) -> Tuple[Operation, str]:
         """Extract paths in archive to destination."""
 
         # Construct arguments
 
-        arguments = [self.name]
+        arguments = []
+
+        if strip_components:
+            arguments.append(f"--strip-components={strip_components}")
+
+        arguments.append(self.name)
         arguments.extend(restore_paths)
 
         # Execute command
@@ -310,3 +324,100 @@ class Archive:
         )
 
         return Operation(progress_file=command.file), destination_path
+
+    def restore(self, *, path: str) -> None:
+        """Restore path in archive to path on local filesystem.
+
+        Borg does not have built-in support for 'restores'. This function extracts
+        the given path in the Borg archive to a temporary directory. It then
+        replaces the path on the local filesystem with the temporary directory.
+
+        This only works when the relative path in the archive is the full path
+        to the absolute path on the local filesystem, i.e. the archive was created
+        in / (see Archive.create docstring). We rely on this logic as Borg does
+        not keep track of the original location of files explicitly.
+
+        'path' should be the absolute path on the local filesystem. The leading
+        slash is automatically stripped when referencing the file in the archive.
+        """
+
+        # Set bak path
+
+        bak_path = f"{path}.bak"
+
+        # Get relative path in archive. See docstring for more information
+
+        archive_path = path[len(os.path.sep) :]
+
+        # Set filesystem object type
+
+        type_ = self.contents(path=archive_path)[0].type_
+
+        # If filesystem object type is symlink, stop
+
+        if type_ == UNIXFileTypes.SYMBOLIC_LINK:
+            raise NotImplementedError
+
+        # Construct temporary directory to extract to
+
+        temporary_path = os.path.join(
+            os.path.sep,
+            "tmp",
+            self.PREFIX_RESTORE_FILESYSTEM_OBJECT
+            + "-"
+            + generate_random_string(),
+        )
+
+        # Create temporary directory
+
+        os.mkdir(temporary_path)
+        os.chmod(temporary_path, 0o700)
+
+        # Set amount of components to strip
+        #
+        # Don't strip trailing slash, which is not present in relative archive
+        # path. In case of a regular file, don't strip itself.
+
+        if type_ == UNIXFileTypes.DIRECTORY:
+            strip_components = len(Path(path).parts) - 1
+
+        elif type_ == UNIXFileTypes.REGULAR_FILE:
+            strip_components = len(Path(path).parts) - 2
+
+        # Extract archive to temporary directory
+
+        self.extract(
+            destination_path=temporary_path,
+            restore_paths=[archive_path],
+            strip_components=strip_components,
+        )
+
+        # Handle overwriting existing data based on type
+
+        if type_ == UNIXFileTypes.DIRECTORY:
+            # Move current path to .bak, so that we can move the temporary directory
+            # to the path
+
+            if os.path.isdir(path):  # Path could be removed
+                os.rename(path, bak_path)
+
+            # Move temporary directory (which contains the extracted archive) to the
+            # path
+
+            os.rename(temporary_path, path)
+
+            # Delete old directory
+
+            if os.path.isdir(bak_path):
+                shutil.rmtree(bak_path)
+
+        elif type_ == UNIXFileTypes.REGULAR_FILE:
+            # Copy file inside temporary path to the path
+
+            shutil.move(
+                os.path.join(temporary_path, os.path.basename(path)), path
+            )
+
+            # Remove now empty temporary directory
+
+            os.rmdir(temporary_path)
