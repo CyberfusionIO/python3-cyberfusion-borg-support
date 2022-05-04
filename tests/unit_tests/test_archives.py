@@ -1,5 +1,7 @@
 import os
 import tarfile
+from pathlib import Path
+from typing import Generator, List
 
 import pytest
 
@@ -8,205 +10,152 @@ from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common.Command import CommandNonZeroError
 
 
-@pytest.mark.order(1)
-def test_archive_setup(repository: Repository) -> None:
-    """Test creating archive, and repository prune, size, archives and extract."""
-
-    name = "test"
-    comment = "Free-form comment!"
-    NAME_ARCHIVE = "/tmp/backup::test"
-
-    # Create directories and files to test archive extract and contents
-
-    os.mkdir("/tmp/backmeupdir1")
-    os.mkdir("/tmp/backmeupdir2")
-
-    with open("/tmp/backmeupdir1/test1.txt", "w") as f:
-        f.write("Hi! 1")
-
-    with open("/tmp/backmeupdir2/test2.txt", "w") as f:
-        f.write("Hi! 2")
-
-    os.symlink("/tmp/backmeupdir2/test2.txt", "/tmp/backmeupdir2/symlink.txt")
-
-    with open("/tmp/backmeupdir1/pleaseexcludeme", "w") as f:
-        f.write("Please exclude me")
-
-    # Create repository
-
-    repository.create(encryption="keyfile-blake2")
-
-    # Set archive
-
-    archive = Archive(repository=repository, name=name, comment=comment)
-
-    # Test attributes
-
-    assert archive.repository == repository
-    assert archive._name == name
-    assert archive._comment == comment
-    assert archive.name == NAME_ARCHIVE
-    assert archive.comment == comment
-
-    # Test archive does not exist at first
-
-    assert NAME_ARCHIVE not in [a.name for a in repository.archives]
-
-    # Test repository empty
-
-    assert repository.size == 42345
-
-    # Create archive
-
-    operation = archive.create(
-        paths=["/tmp/backmeupdir1", "/tmp/backmeupdir2"],
-        excludes=["/tmp/backmeupdir1/pleaseexcludeme"],
-    )
-
-    # Test archive created
-
-    assert NAME_ARCHIVE in [a.name for a in repository.archives]
-
-    # Test repository not empty
-
-    assert repository.size != 42345
-
-    # Test we can't create existing archive again
-
-    with pytest.raises(CommandNonZeroError):
-        archive.create(
-            paths=["/tmp/backmeupdir1", "/tmp/backmeupdir2"],
-            excludes=["/tmp/backmeupdir1/pleaseexcludeme"],
-        )
+def test_archive_extract(
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
+    ]
 
     # Extract archive
 
-    operation, destination_path = archive.extract(
+    operation, destination_path = archives[0].extract(
         destination_path="/tmp",
-        restore_paths=["tmp/backmeupdir1/", "tmp/backmeupdir2/"],
-    )  # Archive created before
-
-    # Test returned destination path is same as input
+        restore_paths=[dir1, dir2],
+    )
 
     assert destination_path == "/tmp"
 
-    # Test archive extracted
+    # Test extracted
 
-    assert open("/tmp/tmp/backmeupdir1/test1.txt", "r").read() == "Hi! 1"
-    assert open("/tmp/tmp/backmeupdir2/test2.txt", "r").read() == "Hi! 2"
-    assert (
-        os.readlink("/tmp/tmp/backmeupdir2/symlink.txt")
-        == "/tmp/backmeupdir2/test2.txt"
-    )
-    assert not os.path.exists("/tmp/tmp/backmeupdir1/pleaseexcludeme")
+    assert open(f"/tmp/{dir1}/test1.txt", "r").read() == "Hi! 1"
+    assert open(f"/tmp/{dir2}/test2.txt", "r").read() == "Hi! 2"
+    assert os.readlink(f"/tmp/{dir2}/symlink.txt") == f"/{dir2}/test2.txt"
+    assert not os.path.exists(f"/tmp/{dir1}/pleaseexcludeme")
 
-    # Export tarball of archive
 
-    operation, destination_path = archive.export_tar(
-        destination_path="/tmp/mytar.tar.gz",
-        restore_paths=["tmp/backmeupdir1/", "tmp/backmeupdir2/"],
+def test_archive_export_tar(
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
+    ]
+
+    path = f"{workspace_directory}/mytar.tar.gz"
+
+    # Export archive to tarball
+
+    operation, destination_path = archives[0].export_tar(
+        destination_path=path,
+        restore_paths=[dir1, dir2],
         strip_components=1,
-    )  # Archive created before
+    )
 
-    # Test returned destination path is same as input
-
-    assert destination_path == "/tmp/mytar.tar.gz"
-
-    # Test tarball exported
-
+    assert destination_path == path
     assert os.path.isfile(destination_path)
 
     # Test tarball contents
 
-    assert tarfile.open("/tmp/mytar.tar.gz").getnames() == [
-        "backmeupdir1",
-        "backmeupdir1/test1.txt",
-        "backmeupdir2",
-        "backmeupdir2/test2.txt",
-        "backmeupdir2/symlink.txt",
+    assert tarfile.open(path).getnames() == [
+        str(Path(*Path(dir1).parts[1:])),
+        str(Path(*Path(f"{dir1}/test1.txt").parts[1:])),
+        str(Path(*Path(dir2).parts[1:])),
+        str(Path(*Path(f"{dir2}/test2.txt").parts[1:])),
+        str(Path(*Path(f"{dir2}/symlink.txt").parts[1:])),
+    ]
+
+
+def test_archive_contents(
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
     ]
 
     # Test archive contents from the root
 
-    contents = archive.contents(path=None)
+    contents = archives[0].contents(path=None)
 
     assert len(contents) == 5
 
     assert contents[0].type_ == UNIXFileTypes.DIRECTORY
     assert contents[0].symbolic_mode == "drwxr-xr-x"
-    assert contents[0].user == "root"
-    assert contents[0].group == "root"
-    assert contents[0].path == "tmp/backmeupdir1"
+    assert contents[0].user
+    assert contents[0].group
+    assert contents[0].path == dir1
     assert contents[0].link_target is None
     assert contents[0].modification_time
     assert contents[0].size is None
 
     assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
     assert contents[1].symbolic_mode == "-rw-r--r--"
-    assert contents[1].user == "root"
-    assert contents[1].group == "root"
-    assert contents[1].path == "tmp/backmeupdir1/test1.txt"
+    assert contents[1].user
+    assert contents[1].group
+    assert contents[1].path == f"{dir1}/test1.txt"
     assert contents[1].link_target is None
     assert contents[1].modification_time
     assert contents[1].size != 0
 
     assert contents[2].type_ == UNIXFileTypes.DIRECTORY
     assert contents[2].symbolic_mode == "drwxr-xr-x"
-    assert contents[2].user == "root"
-    assert contents[2].group == "root"
-    assert contents[2].path == "tmp/backmeupdir2"
+    assert contents[2].user
+    assert contents[2].group
+    assert contents[2].path == dir2
     assert contents[2].link_target is None
     assert contents[2].modification_time
     assert contents[2].size is None
 
     assert contents[3].type_ == UNIXFileTypes.REGULAR_FILE
     assert contents[3].symbolic_mode == "-rw-r--r--"
-    assert contents[3].user == "root"
-    assert contents[3].group == "root"
-    assert contents[3].path == "tmp/backmeupdir2/test2.txt"
+    assert contents[3].user
+    assert contents[3].group
+    assert contents[3].path == f"{dir2}/test2.txt"
     assert contents[3].link_target is None
     assert contents[3].modification_time
     assert contents[3].size != 0
 
     assert contents[4].type_ == UNIXFileTypes.SYMBOLIC_LINK
-    assert contents[4].symbolic_mode == "lrwxrwxrwx"
-    assert contents[4].user == "root"
-    assert contents[4].group == "root"
-    assert contents[4].path == "tmp/backmeupdir2/symlink.txt"
-    assert contents[4].link_target == "/tmp/backmeupdir2/test2.txt"
+    assert (
+        contents[4].symbolic_mode == "lrwxrwxrwx"
+        or contents[4].symbolic_mode == "lrwxr-xr-x"
+    )  # Different on macOS
+    assert contents[4].user
+    assert contents[4].group
+    assert contents[4].path == f"{dir2}/symlink.txt"
+    assert contents[4].link_target == f"/{dir2}/test2.txt"
     assert contents[4].modification_time
     assert contents[4].size is None
 
     # Test archive contents from directory
 
-    contents = archive.contents(path="tmp/backmeupdir1")
+    contents = archives[0].contents(path=dir1)
 
     assert len(contents) == 2
 
     assert contents[0].type_ == UNIXFileTypes.DIRECTORY
-    assert contents[0].path == "tmp/backmeupdir1"
+    assert contents[0].path == dir1
 
     assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
-    assert contents[1].path == "tmp/backmeupdir1/test1.txt"
+    assert contents[1].path == f"{dir1}/test1.txt"
 
     # Test archive contents from file
 
-    contents = archive.contents(path="tmp/backmeupdir1/test1.txt")
+    contents = archives[0].contents(path=f"{dir1}/test1.txt")
 
     assert len(contents) == 1
 
     assert contents[0].type_ == UNIXFileTypes.REGULAR_FILE
-    assert contents[0].path == "tmp/backmeupdir1/test1.txt"
-
-    # Prune repository now that is has an archive to prune. Use all keep_*
-    # possibilities to test each 'if keep_*:' statement
-
-    repository.prune(keep_hourly=1)
-    repository.prune(keep_daily=1)
-    repository.prune(keep_weekly=1)
-    repository.prune(keep_monthly=1)
-    repository.prune(keep_yearly=1)
-
-    # Delete repository
-
-    repository.delete()
+    assert contents[0].path == f"{dir1}/test1.txt"

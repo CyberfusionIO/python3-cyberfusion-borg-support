@@ -1,14 +1,58 @@
 import os
 from copy import deepcopy
+from typing import Generator
 
 import pytest
 
+# MockFixture is only available for backward compatibility.
+# This causes 'error: Module 'pytest_mock' has no attribute
+# 'MockerFixture'; maybe "MockFixture"?' in CI
+from pytest_mock import MockerFixture  # type: ignore[attr-defined]
+
 from cyberfusion.BorgSupport.borg_cli import (
+    BorgCommand,
     BorgLoggedCommand,
     BorgRegularCommand,
     _get_rsh_argument,
+    get_borg_bin,
 )
 from cyberfusion.BorgSupport.repositories import Repository
+
+
+def test_borg_bin_local(mocker: MockerFixture) -> None:
+    def isfile_side_effect(path: str) -> bool:
+        """Pretend that /usr/local/bin/borg and /usr/bin/borg both exist."""
+        if path == "/usr/local/bin/borg":
+            return True
+
+        elif path == "/usr/bin/borg":
+            return True
+
+        return os.path.isfile(path)
+
+    mocker.patch(
+        "os.path.isfile", new=mocker.Mock(side_effect=isfile_side_effect)
+    )
+
+    assert get_borg_bin() == "/usr/local/bin/borg"
+
+
+def test_borg_bin_system(mocker: MockerFixture) -> None:
+    def isfile_side_effect(path: str) -> bool:
+        """Pretend that /usr/local/bin/borg does not exist, and /usr/bin/borg exists."""
+        if path == "/usr/local/bin/borg":
+            return False
+
+        elif path == "/usr/bin/borg":
+            return True
+
+        return os.path.isfile(path)
+
+    mocker.patch(
+        "os.path.isfile", new=mocker.Mock(side_effect=isfile_side_effect)
+    )
+
+    assert get_borg_bin() == "/usr/bin/borg"
 
 
 def test_borg_regular_command_attributes(
@@ -21,11 +65,17 @@ def test_borg_regular_command_attributes(
 
 
 def test_borg_logged_command_attributes(
-    repository_init: Repository, borg_logged_command: BorgLoggedCommand
+    repository_init: Generator[Repository, None, None],
+    borg_logged_command: BorgLoggedCommand,
+    workspace_directory: Generator[str, None, None],
 ) -> None:
     borg_logged_command.execute(
         command="create",
-        arguments=["/tmp/anotherbackup::testarchivename", "/root"],
+        arguments=[
+            os.path.join(workspace_directory, "repository2")
+            + "::testarchivename",
+            "/bin/sh",
+        ],
         **repository_init._safe_cli_options,
     )
 
@@ -41,7 +91,7 @@ def test_borg_regular_command_command_and_arguments(
     )
 
     assert borg_regular_command.command == [
-        "/usr/bin/borg",
+        BorgCommand.BORG_BIN,
         "info",
         "--test1=test1",
         "--test2=test2",
@@ -49,22 +99,27 @@ def test_borg_regular_command_command_and_arguments(
 
 
 def test_borg_logged_command_command_and_arguments(
-    repository_init: Repository,
+    repository_init: Generator[Repository, None, None],
     borg_logged_command: BorgLoggedCommand,
+    workspace_directory: Generator[str, None, None],
 ) -> None:
     borg_logged_command.execute(
         run=False,
         command="create",
-        arguments=["/tmp/anotherbackup::testarchivename", "/root"],
+        arguments=[
+            os.path.join(workspace_directory, "repository2")
+            + "::testarchivename",
+            "/root",
+        ],
         **repository_init._safe_cli_options,
     )
 
     assert borg_logged_command.command == [
-        "/usr/bin/borg",
+        BorgCommand.BORG_BIN,
         "--progress",
         "--log-json",
         "create",
-        "/tmp/anotherbackup::testarchivename",
+        os.path.join(workspace_directory, "repository2") + "::testarchivename",
         "/root",
     ]
 
@@ -74,7 +129,11 @@ def test_borg_regular_command_json(
 ) -> None:
     borg_regular_command.execute(run=False, command="info", json_format=True)
 
-    assert borg_regular_command.command == ["/usr/bin/borg", "info", "--json"]
+    assert borg_regular_command.command == [
+        BorgCommand.BORG_BIN,
+        "info",
+        "--json",
+    ]
 
 
 def test_get_rsh_argument() -> None:
@@ -92,7 +151,7 @@ def test_borg_regular_command_identity_file_path(
     )
 
     assert borg_regular_command.command == [
-        "/usr/bin/borg",
+        BorgCommand.BORG_BIN,
         "info",
         "--rsh",
         "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
@@ -100,8 +159,9 @@ def test_borg_regular_command_identity_file_path(
 
 
 def test_borg_logged_command_identity_file_path(
-    repository_init: Repository,
+    repository_init: Generator[Repository, None, None],
     borg_logged_command: BorgLoggedCommand,
+    workspace_directory: Generator[str, None, None],
 ) -> None:
     # Remove identity_file_path from default _safe_cli_options, as we need to
     # override the value of None for this test
@@ -112,18 +172,22 @@ def test_borg_logged_command_identity_file_path(
     borg_logged_command.execute(
         run=False,
         command="create",
-        arguments=["/tmp/anotherbackup::testarchivename", "/root"],
+        arguments=[
+            os.path.join(workspace_directory, "repository2")
+            + "::testarchivename",
+            "/root",
+        ],
         identity_file_path="/tmp/test.key",
         **_safe_cli_options,
     )
 
     assert borg_logged_command.command == [
-        "/usr/bin/borg",
+        BorgCommand.BORG_BIN,
         "--progress",
         "--log-json",
         "create",
         "--rsh",
         "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
-        "/tmp/anotherbackup::testarchivename",
+        os.path.join(workspace_directory, "repository2") + "::testarchivename",
         "/root",
     ]
