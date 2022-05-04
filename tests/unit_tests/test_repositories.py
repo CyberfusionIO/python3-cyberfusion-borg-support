@@ -4,7 +4,6 @@ from typing import Generator, List
 from unittest.mock import patch
 
 import pytest
-from pytest_mock import MockerFixture
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand

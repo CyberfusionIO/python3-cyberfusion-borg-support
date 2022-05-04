@@ -5,7 +5,7 @@ import os
 import shutil
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from cyberfusion.BorgSupport.borg_cli import (
@@ -145,8 +145,6 @@ class FilesystemObject:
 
 class Archive:
     """Abstraction of Borg archive."""
-
-    PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore"
 
     def __init__(
         self,
@@ -325,99 +323,177 @@ class Archive:
 
         return Operation(progress_file=command.file), destination_path
 
-    def restore(self, *, path: str) -> None:
-        """Restore path in archive to path on local filesystem.
 
-        Borg does not have built-in support for 'restores'. This function extracts
-        the given path in the Borg archive to a temporary directory. It then
-        replaces the path on the local filesystem with the temporary directory.
+class ArchiveRestoration:
+    """Abstraction of Borg archive restore process.
 
-        This only works when the relative path in the archive is the full path
-        to the absolute path on the local filesystem, i.e. the archive was created
-        in / (see Archive.create docstring). We rely on this logic as Borg does
-        not keep track of the original location of files explicitly.
+    Restores path in archive to path on local filesystem.
 
-        'path' should be the absolute path on the local filesystem. The leading
-        slash is automatically stripped when referencing the file in the archive.
+    Borg does not have built-in support for 'restores'. This function extracts
+    the given path in the Borg archive to a temporary directory. It then
+    replaces the path on the local filesystem with the temporary directory.
+
+    This only works when the relative path in the archive is the full path
+    to the absolute path on the local filesystem, i.e. the archive was created
+    in / (see Archive.create docstring). We rely on this logic as Borg does
+    not keep track of the original location of files explicitly.
+
+    'path' should be the absolute path on the local filesystem. The leading
+    slash is automatically stripped when referencing the file in the archive.
+    """
+
+    PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore"
+
+    def __init__(
+        self,
+        *,
+        archive: Archive,
+        path: str,
+        temporary_path_root_path: str,
+        enforce_home_directory: bool = False,
+    ):
+        """Set attributes."""
+        if not path.startswith(os.path.sep):
+            raise ValueError(f"Path has to start with {os.path.sep}")
+
+        self.archive = archive
+        self._path = path
+        self._enforce_home_directory = enforce_home_directory
+        self.filesystem_path = self._path
+
+        self._check_type()
+        self.temporary_path = self._create_temporary_path(
+            root_path=temporary_path_root_path
+        )
+
+    def _check_type(self) -> None:
+        """Raise exception if type of filesystem object is not supported."""
+        if self.type_ in [UNIXFileTypes.DIRECTORY, UNIXFileTypes.REGULAR_FILE]:
+            return
+
+        raise NotImplementedError
+
+    @property
+    def type_(self) -> UNIXFileTypes:
+        """Set type of filesystem object at path."""
+        return next(  # Raises StopIteration if no results
+            filter(
+                lambda x: x.path == self.archive_path,
+                self.archive.contents(path=self.archive_path),
+            )
+        ).type_
+
+    @property
+    def filesystem_path(self) -> str:
+        """Set filesystem path.
+
+        Path on local filesystem is absolute, so is path with leading slash. See
+        docstring for more information.
         """
+        return self._filesystem_path
 
-        # Set bak path
+    @filesystem_path.setter
+    def filesystem_path(self, value: str) -> None:
+        """Set filesystem path.
 
-        bak_path = f"{path}.bak"
+        Checks if filesystem path is in user home directory.
+        Path is 1) the path that is restored from the archive and 2) the
+        restore destination on the local filesystem. Restoring an arbitrary
+        path from the archive is relatively safe, as it should never contain
+        paths other than those owned by the user. Nonetheless, it's not neat
+        to be able to restore to an arbitrary path on the local filesystem.
+        Therefore, we explicitly check if the path is in the home directory
+        of the user executing this script.
+        """
+        if (
+            self._enforce_home_directory
+            and Path.home() not in PosixPath(value).parents
+        ):
+            raise ValueError("Path must be in user home directory")
 
-        # Get relative path in archive. See docstring for more information
+        self._filesystem_path = value
 
-        archive_path = path[len(os.path.sep) :]
+    @property
+    def archive_path(self) -> str:
+        """Set archive path.
 
-        # Set filesystem object type
+        Path in archive is relative, so is path without leading slash. See docstring
+        for more information.
+        """
+        return self._path[len(os.path.sep) :]
 
-        type_ = self.contents(path=archive_path)[0].type_
-
-        # If filesystem object type is symlink, stop
-
-        if type_ == UNIXFileTypes.SYMBOLIC_LINK:
-            raise NotImplementedError
-
-        # Construct temporary directory to extract to
-
+    def _create_temporary_path(self, *, root_path: str) -> str:
+        """Generate and create temporary path."""
         temporary_path = os.path.join(
-            os.path.sep,
-            "tmp",
+            root_path,
             self.PREFIX_RESTORE_FILESYSTEM_OBJECT
             + "-"
             + generate_random_string(),
         )
 
-        # Create temporary directory
-
         os.mkdir(temporary_path)
         os.chmod(temporary_path, 0o700)
 
-        # Set amount of components to strip
-        #
-        # Don't strip trailing slash, which is not present in relative archive
-        # path. In case of a regular file, don't strip itself.
+        return temporary_path
 
-        if type_ == UNIXFileTypes.DIRECTORY:
-            strip_components = len(Path(path).parts) - 1
+    @property
+    def bak_path(self) -> str:
+        """Set bak path."""
+        return self.filesystem_path + ".bak"
 
-        elif type_ == UNIXFileTypes.REGULAR_FILE:
-            strip_components = len(Path(path).parts) - 2
+    @property
+    def strip_components(self) -> int:
+        """Set amount of components to strip."""
+        if self.type_ != UNIXFileTypes.DIRECTORY:
+            return len(Path(self.archive_path).parts) - 1
 
-        # Extract archive to temporary directory
+        return len(
+            Path(self.archive_path).parts
+        )  # Make sure directory contents are in root
 
-        self.extract(
-            destination_path=temporary_path,
-            restore_paths=[archive_path],
-            strip_components=strip_components,
+    def extract(self) -> None:
+        """Extract archive path to temporary path."""
+        self.archive.extract(
+            destination_path=self.temporary_path,
+            restore_paths=[self.archive_path],
+            strip_components=self.strip_components,
         )
 
-        # Handle overwriting existing data based on type
+    def replace(self) -> None:
+        """Replace object on local filesystem with object from archive.
 
-        if type_ == UNIXFileTypes.DIRECTORY:
-            # Move current path to .bak, so that we can move the temporary directory
-            # to the path
+        This should be a nearly race-free process, i.e. there should be almost no
+        downtime when replacing. This is done by following these steps:
 
-            if os.path.isdir(path):  # Path could be removed
-                os.rename(path, bak_path)
+        - Filesystem object is extracted from archive to temporary path on the
+          local filesystem.
+        - Current filesystem path on local filesystem is moved to the bak path.
+          The structure is now 'broken'.
+        - The filesystem object is moved from the temporary path on the local
+          filesystem to the filesystem path on the local filesystem. The structure
+          is now 'restored'.
+        """
+        self.extract()
 
-            # Move temporary directory (which contains the extracted archive) to the
-            # path
-
-            os.rename(temporary_path, path)
-
-            # Delete old directory
-
-            if os.path.isdir(bak_path):
-                shutil.rmtree(bak_path)
-
-        elif type_ == UNIXFileTypes.REGULAR_FILE:
-            # Copy file inside temporary path to the path
-
+        if self.type_ == UNIXFileTypes.REGULAR_FILE:
             shutil.move(
-                os.path.join(temporary_path, os.path.basename(path)), path
+                os.path.join(
+                    self.temporary_path, os.path.basename(self.archive_path)
+                ),
+                self.filesystem_path,
             )
 
-            # Remove now empty temporary directory
+            return
 
-            os.rmdir(temporary_path)
+        # When we get here, we know self.type_ is UNIXFileTypes.DIRECTORY (see
+        # self._check_type)
+
+        if os.path.isdir(
+            self.filesystem_path
+        ):  # Directory could have been removed between archive create and restore
+            os.rename(self.filesystem_path, self.bak_path)
+
+        os.rename(self.temporary_path, self.filesystem_path)
+
+        if os.path.isdir(self.bak_path):
+            shutil.rmtree(self.bak_path)

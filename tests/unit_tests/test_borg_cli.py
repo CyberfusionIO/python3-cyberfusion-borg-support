@@ -3,10 +3,6 @@ from copy import deepcopy
 from typing import Generator
 
 import pytest
-
-# MockFixture is only available for backward compatibility.
-# This causes 'error: Module 'pytest_mock' has no attribute
-# 'MockerFixture'; maybe "MockFixture"?' in CI
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport.borg_cli import (
