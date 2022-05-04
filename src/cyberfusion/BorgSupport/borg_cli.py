@@ -10,10 +10,23 @@ from typing import Dict, List, Optional
 from cyberfusion.Common.Command import CyberfusionCommand
 
 
+def get_borg_bin() -> str:
+    """Return Borg binary in either local or system binary directory."""
+    local_path = os.path.join(CyberfusionCommand.PATH_USR_LOCAL_BIN, "borg")
+    system_path = os.path.join(CyberfusionCommand.PATH_USR_BIN, "borg")
+
+    if os.path.isfile(local_path):
+        return local_path
+
+    return system_path
+
+
 class BorgCommand:
     """Constants for Borg CLI."""
 
-    BORG_BIN = os.path.join(CyberfusionCommand.PATH_USR_BIN, "borg")
+    BORG_BIN = get_borg_bin()
+
+    # Subcommands
 
     SUBCOMMAND_DELETE = "delete"
     SUBCOMMAND_PRUNE = "prune"

@@ -1,3 +1,5 @@
+from typing import Generator
+
 import pytest
 
 from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
@@ -10,8 +12,6 @@ from cyberfusion.BorgSupport.operations import (
 
 
 def test_operation_attributes() -> None:
-    """Test operation attributes."""
-
     # Get operation
 
     operation = Operation(
@@ -64,14 +64,11 @@ def test_operation_attributes() -> None:
 
 
 def test_operation_unknown_types_error() -> None:
-    """Test operation with progress file with unknown types raises error."""
     with pytest.raises(OperationLineNotImplementedError):
         Operation(progress_file="/tmp/progress_file_with_unknown_types.txt")
 
 
 def test_operation_no_lines() -> None:
-    """Test operation with progress file with no lines has no lines."""
-
     # Get operation
 
     operation = Operation(progress_file="/tmp/progress_file_with_no_lines.txt")
