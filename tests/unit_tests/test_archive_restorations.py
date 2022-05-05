@@ -166,13 +166,11 @@ def test_archive_restoration_restore_directory_not_exists(
     )
 
     spy_isdir = mocker.spy(os.path, "isdir")
-    mock_rename = mocker.patch.object(
-        os, "rename", return_value=None
+    mock_move = mocker.patch.object(
+        shutil, "move", return_value=None
     )  # Don't actually move temporary path to filesystem path
 
-    archive_restoration.filesystem_path = (
-        "/tmp/doesnotexist"  # Temporarily override so os.path.isdir is False
-    )
+    archive_restoration.filesystem_path = "/tmp/doesnotexist"  # Temporarily override so that os.path.isdir returns False
     archive_restoration.replace()
 
     spy_isdir.assert_has_calls(
@@ -181,7 +179,7 @@ def test_archive_restoration_restore_directory_not_exists(
             mocker.call(archive_restoration.bak_path),
         ],
     )
-    mock_rename.assert_called_once_with(
+    mock_move.assert_called_once_with(
         archive_restoration.temporary_path + "/" + "backmeupdir2",
         archive_restoration.filesystem_path,
     )
@@ -203,7 +201,8 @@ def test_archive_restoration_restore_directory_exists(
 
     spy_isdir = mocker.spy(os.path, "isdir")
     spy_rename = mocker.spy(os, "rename")
-    spy_shutil = mocker.spy(shutil, "rmtree")
+    spy_shutil_move = mocker.spy(shutil, "move")
+    spy_shutil_rmtree = mocker.spy(shutil, "rmtree")
 
     archive_restoration.replace()
 
@@ -213,17 +212,11 @@ def test_archive_restoration_restore_directory_exists(
             mocker.call(archive_restoration.bak_path),
         ],
     )
-    spy_rename.assert_has_calls(
-        [
-            mocker.call(
-                archive_restoration.filesystem_path,
-                archive_restoration.bak_path,
-            ),
-            mocker.call(
-                archive_restoration.temporary_path + "/" + "backmeupdir2",
-                archive_restoration.filesystem_path,
-            ),
-        ]
+    assert spy_rename.call_args_list[0] == mocker.call(
+        archive_restoration.filesystem_path, archive_restoration.bak_path
     )
-
-    spy_shutil.assert_called_once_with(archive_restoration.bak_path)
+    spy_shutil_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "backmeupdir2",
+        archive_restoration.filesystem_path,
+    )
+    spy_shutil_rmtree.assert_called_once_with(archive_restoration.bak_path)
