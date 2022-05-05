@@ -70,7 +70,7 @@ def test_archive_restoration_directory_attributes(
     assert archive_restoration.type_ == UNIXFileTypes.DIRECTORY
     assert archive_restoration.filesystem_path == dir2_with_leading_slash
     assert archive_restoration.archive_path == dir2_without_leading_slash
-    assert archive_restoration.strip_components == 3
+    assert archive_restoration.strip_components == 2
     assert archive_restoration.bak_path == dir2_with_leading_slash + ".bak"
 
     assert os.path.isdir(archive_restoration.temporary_path)
@@ -105,7 +105,8 @@ def test_archive_restoration_regular_file_attributes(
     assert archive_restoration.filesystem_path == file_with_leading_slash
     assert archive_restoration.archive_path == file_without_leading_slash
     assert archive_restoration.strip_components == 3
-    assert archive_restoration.bak_path == file_with_leading_slash + ".bak"
+    with pytest.raises(Exception):
+        assert archive_restoration.bak_path
 
     assert os.path.isdir(archive_restoration.temporary_path)
     assert os.stat(archive_restoration.temporary_path).st_mode == 16832
@@ -181,7 +182,8 @@ def test_archive_restoration_restore_directory_not_exists(
         ],
     )
     mock_rename.assert_called_once_with(
-        archive_restoration.temporary_path, archive_restoration.filesystem_path
+        archive_restoration.temporary_path + "/" + "backmeupdir2",
+        archive_restoration.filesystem_path,
     )
 
 
@@ -218,7 +220,7 @@ def test_archive_restoration_restore_directory_exists(
                 archive_restoration.bak_path,
             ),
             mocker.call(
-                archive_restoration.temporary_path,
+                archive_restoration.temporary_path + "/" + "backmeupdir2",
                 archive_restoration.filesystem_path,
             ),
         ]

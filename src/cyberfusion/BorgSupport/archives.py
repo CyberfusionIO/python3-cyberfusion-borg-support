@@ -439,17 +439,17 @@ class ArchiveRestoration:
     @property
     def bak_path(self) -> str:
         """Set bak path."""
+        if self.type_ != UNIXFileTypes.DIRECTORY:
+            raise Exception(
+                "Bak path is not needed for filesystem objects with other type than directory"
+            )
+
         return self.filesystem_path + ".bak"
 
     @property
     def strip_components(self) -> int:
         """Set amount of components to strip."""
-        if self.type_ != UNIXFileTypes.DIRECTORY:
-            return len(Path(self.archive_path).parts) - 1
-
-        return len(
-            Path(self.archive_path).parts
-        )  # Make sure directory contents are in root
+        return len(Path(self.archive_path).parts) - 1
 
     def extract(self) -> None:
         """Extract archive path to temporary path."""
@@ -493,7 +493,12 @@ class ArchiveRestoration:
         ):  # Directory could have been removed between archive create and restore
             os.rename(self.filesystem_path, self.bak_path)
 
-        os.rename(self.temporary_path, self.filesystem_path)
+        os.rename(
+            os.path.join(
+                self.temporary_path, os.path.basename(self.archive_path)
+            ),
+            self.filesystem_path,
+        )
 
         if os.path.isdir(self.bak_path):
             shutil.rmtree(self.bak_path)
