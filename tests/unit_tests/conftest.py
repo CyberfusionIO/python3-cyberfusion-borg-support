@@ -15,7 +15,9 @@ from cyberfusion.Common import generate_random_string, get_tmp_file
 
 @pytest.fixture(scope="session")
 def workspace_directory() -> Generator[str, None, None]:
-    path = f"/tmp/borg-{generate_random_string(4)}"
+    path = os.path.join(
+        os.path.sep, "tmp", "borg-" + generate_random_string().lower()
+    )
 
     # Create
 
