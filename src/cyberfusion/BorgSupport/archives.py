@@ -493,7 +493,7 @@ class ArchiveRestoration:
         ):  # Directory could have been removed between archive create and restore
             os.rename(self.filesystem_path, self.bak_path)
 
-        os.rename(
+        shutil.move(
             os.path.join(
                 self.temporary_path, os.path.basename(self.archive_path)
             ),
