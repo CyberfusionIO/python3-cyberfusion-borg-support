@@ -439,11 +439,6 @@ class ArchiveRestoration:
     @property
     def bak_path(self) -> str:
         """Set bak path."""
-        if self.type_ != UNIXFileTypes.DIRECTORY:
-            raise Exception(
-                "Bak path is not needed for filesystem objects with other type than directory"
-            )
-
         return self.filesystem_path + ".bak"
 
     @property
@@ -472,25 +467,15 @@ class ArchiveRestoration:
         - The filesystem object is moved from the temporary path on the local
           filesystem to the filesystem path on the local filesystem. The structure
           is now 'restored'.
+
+        This procedure is also followed for regular files. Unlike non-empty
+        directories, regular files can be overwritten without having to ensure
+        the filesystem object does not exist at the path, unless the regular
+        file is write-protected (e.g. if it has permissions 0400).
         """
         self.extract()
 
-        if self.type_ == UNIXFileTypes.REGULAR_FILE:
-            shutil.move(
-                os.path.join(
-                    self.temporary_path, os.path.basename(self.archive_path)
-                ),
-                self.filesystem_path,
-            )
-
-            return
-
-        # When we get here, we know self.type_ is UNIXFileTypes.DIRECTORY (see
-        # self._check_type)
-
-        if os.path.isdir(
-            self.filesystem_path
-        ):  # Directory could have been removed between archive create and restore
+        if os.path.lexists(self.filesystem_path):
             os.rename(self.filesystem_path, self.bak_path)
 
         shutil.move(
@@ -500,5 +485,10 @@ class ArchiveRestoration:
             self.filesystem_path,
         )
 
-        if os.path.isdir(self.bak_path):
-            shutil.rmtree(self.bak_path)
+        if os.path.lexists(self.bak_path):
+            if self.type_ == UNIXFileTypes.DIRECTORY:
+                shutil.rmtree(self.bak_path)
+
+                return
+
+            os.unlink(self.bak_path)
