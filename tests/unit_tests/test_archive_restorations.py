@@ -127,6 +127,79 @@ def test_archive_restoration_path_not_in_home_directory(
         )
 
 
+def test_archive_restoration_restore_regular_file_not_exists(
+    mocker: MockerFixture,
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+):
+    path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
+
+    archive_restoration = ArchiveRestoration(
+        archive=archives[0],
+        path=path,
+        temporary_path_root_path=workspace_directory,
+    )
+
+    spy_lexists = mocker.spy(os.path, "lexists")
+    mock_move = mocker.patch.object(
+        shutil, "move", return_value=None
+    )  # Don't actually move temporary path to filesystem path
+
+    archive_restoration.filesystem_path = "/tmp/doesnotexist"  # Temporarily override so that os.path.lexists returns False
+    archive_restoration.replace()
+
+    spy_lexists.assert_has_calls(
+        [
+            mocker.call(archive_restoration.filesystem_path),
+            mocker.call(archive_restoration.bak_path),
+        ],
+    )
+    mock_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "test2.txt",
+        archive_restoration.filesystem_path,
+    )
+
+
+def test_archive_restoration_restore_regular_file_exists(
+    mocker: MockerFixture,
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+):
+    path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
+
+    archive_restoration = ArchiveRestoration(
+        archive=archives[0],
+        path=path,
+        temporary_path_root_path=workspace_directory,
+    )
+
+    spy_lexists = mocker.spy(os.path, "lexists")
+    spy_rename = mocker.spy(os, "rename")
+    spy_shutil_move = mocker.spy(shutil, "move")
+    spy_unlink = mocker.spy(os, "unlink")
+
+    archive_restoration.replace()
+
+    spy_lexists.assert_has_calls(
+        [
+            mocker.call(archive_restoration.filesystem_path),
+            mocker.call(archive_restoration.bak_path),
+        ],
+    )
+    assert spy_rename.call_args_list[0] == mocker.call(
+        archive_restoration.filesystem_path, archive_restoration.bak_path
+    )
+    spy_shutil_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "test2.txt",
+        archive_restoration.filesystem_path,
+    )
+    assert spy_unlink.call_args_list[-1] == mocker.call(
+        archive_restoration.bak_path
+    )
+
+
 def test_archive_restoration_restore_directory_not_exists(
     mocker: MockerFixture,
     repository_init: Generator[Repository, None, None],
@@ -196,78 +269,3 @@ def test_archive_restoration_restore_directory_exists(
         archive_restoration.filesystem_path,
     )
     spy_shutil_rmtree.assert_called_once_with(archive_restoration.bak_path)
-
-
-def test_archive_restoration_restore_regular_file_not_exists(
-    mocker: MockerFixture,
-    repository_init: Generator[Repository, None, None],
-    archives: Generator[List[Archive], None, None],
-    workspace_directory: Generator[str, None, None],
-):
-    path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
-
-    archive_restoration = ArchiveRestoration(
-        archive=archives[0],
-        path=path,
-        temporary_path_root_path=workspace_directory,
-    )
-
-    spy_lexists = mocker.spy(os.path, "lexists")
-    mock_move = mocker.patch.object(
-        shutil, "move", return_value=None
-    )  # Don't actually move temporary path to filesystem path
-
-    archive_restoration.filesystem_path = "/tmp/doesnotexist"  # Temporarily override so that os.path.lexists returns False
-    archive_restoration.replace()
-
-    spy_lexists.assert_has_calls(
-        [
-            mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
-        ],
-    )
-    mock_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "test2.txt",
-        archive_restoration.filesystem_path,
-    )
-
-
-def test_archive_restoration_restore_regular_file_exists(
-    mocker: MockerFixture,
-    repository_init: Generator[Repository, None, None],
-    archives: Generator[List[Archive], None, None],
-    workspace_directory: Generator[str, None, None],
-):
-    mocker.patch.object(os, "unlink", return_value=None)
-
-    path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
-
-    archive_restoration = ArchiveRestoration(
-        archive=archives[0],
-        path=path,
-        temporary_path_root_path=workspace_directory,
-    )
-
-    spy_lexists = mocker.spy(os.path, "lexists")
-    spy_rename = mocker.spy(os, "rename")
-    spy_shutil_move = mocker.spy(shutil, "move")
-    spy_unlink = mocker.spy(os, "unlink")
-
-    archive_restoration.replace()
-
-    spy_lexists.assert_has_calls(
-        [
-            mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
-        ],
-    )
-    assert spy_rename.call_args_list[0] == mocker.call(
-        archive_restoration.filesystem_path, archive_restoration.bak_path
-    )
-    spy_shutil_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "test2.txt",
-        archive_restoration.filesystem_path,
-    )
-    assert spy_unlink.call_args_list[-1] == mocker.call(
-        archive_restoration.bak_path
-    )
