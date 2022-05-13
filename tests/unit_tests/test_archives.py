@@ -66,13 +66,15 @@ def test_archive_export_tar(
 
     # Test tarball contents
 
-    assert tarfile.open(path).getnames() == [
-        str(Path(*Path(dir1).parts[1:])),
-        str(Path(*Path(f"{dir1}/test1.txt").parts[1:])),
-        str(Path(*Path(dir2).parts[1:])),
-        str(Path(*Path(f"{dir2}/symlink.txt").parts[1:])),
-        str(Path(*Path(f"{dir2}/test2.txt").parts[1:])),
-    ]
+    assert sorted(tarfile.open(path).getnames()) == sorted(
+        [
+            str(Path(*Path(dir1).parts[1:])),
+            str(Path(*Path(f"{dir1}/test1.txt").parts[1:])),
+            str(Path(*Path(dir2).parts[1:])),
+            str(Path(*Path(f"{dir2}/symlink.txt").parts[1:])),
+            str(Path(*Path(f"{dir2}/test2.txt").parts[1:])),
+        ]
+    )
 
 
 def test_archive_contents(
