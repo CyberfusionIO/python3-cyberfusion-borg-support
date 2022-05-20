@@ -71,11 +71,11 @@ def test_archive_restoration_directory_attributes(
     assert archive_restoration.filesystem_path == dir2_with_leading_slash
     assert archive_restoration.archive_path == dir2_without_leading_slash
     assert archive_restoration.strip_components == 2
-    assert archive_restoration.old_path == os.path.join(
-        workspace_directory, ".backmeupdir2.old"
+    assert archive_restoration.old_path.startswith(
+        os.path.join(workspace_directory, ".backmeupdir2.old-")
     )
-    assert archive_restoration.new_path == os.path.join(
-        workspace_directory, ".backmeupdir2.new"
+    assert archive_restoration.new_path.startswith(
+        os.path.join(workspace_directory, ".backmeupdir2.new-")
     )
 
     assert os.path.isdir(archive_restoration.temporary_path)
@@ -110,11 +110,11 @@ def test_archive_restoration_regular_file_attributes(
     assert archive_restoration.filesystem_path == file_with_leading_slash
     assert archive_restoration.archive_path == file_without_leading_slash
     assert archive_restoration.strip_components == 3
-    assert archive_restoration.old_path == os.path.join(
-        workspace_directory, "backmeupdir2", ".test2.txt.old"
+    assert archive_restoration.old_path.startswith(
+        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.old-")
     )
-    assert archive_restoration.new_path == os.path.join(
-        workspace_directory, "backmeupdir2", ".test2.txt.new"
+    assert archive_restoration.new_path.startswith(
+        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.new-")
     )
 
     assert os.path.isdir(archive_restoration.temporary_path)

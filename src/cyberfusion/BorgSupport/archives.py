@@ -8,6 +8,8 @@ from enum import Enum
 from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
+from cached_property import cached_property
+
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
     BorgLoggedCommand,
@@ -436,26 +438,34 @@ class ArchiveRestoration:
 
         return temporary_path
 
-    @property
+    @cached_property
     def old_path(self) -> str:
-        """Set old path.
+        """Set old path."""
 
-        Add dot prefix to prevent access.
-        """
+        # Add dot prefix to prevent access, and add random string in case filesystem
+        # object without random string already exists
+
         return os.path.join(
             Path(self.filesystem_path).parent,
-            "." + os.path.basename(self.filesystem_path) + ".old",
+            "."
+            + os.path.basename(self.filesystem_path)
+            + ".old-"
+            + generate_random_string(8),
         )
 
-    @property
+    @cached_property
     def new_path(self) -> str:
-        """Set new path.
+        """Set new path."""
 
-        Add dot prefix to prevent access.
-        """
+        # Add dot prefix to prevent access, and add random string in case filesystem
+        # object without random string already exists
+
         return os.path.join(
             Path(self.filesystem_path).parent,
-            "." + os.path.basename(self.filesystem_path) + ".new",
+            "."
+            + os.path.basename(self.filesystem_path)
+            + ".new-"
+            + generate_random_string(8),
         )
 
     @property
