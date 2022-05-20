@@ -71,7 +71,12 @@ def test_archive_restoration_directory_attributes(
     assert archive_restoration.filesystem_path == dir2_with_leading_slash
     assert archive_restoration.archive_path == dir2_without_leading_slash
     assert archive_restoration.strip_components == 2
-    assert archive_restoration.bak_path == dir2_with_leading_slash + ".bak"
+    assert archive_restoration.old_path.startswith(
+        os.path.join(workspace_directory, ".backmeupdir2.old-")
+    )
+    assert archive_restoration.new_path.startswith(
+        os.path.join(workspace_directory, ".backmeupdir2.new-")
+    )
 
     assert os.path.isdir(archive_restoration.temporary_path)
     assert os.stat(archive_restoration.temporary_path).st_mode == 16832
@@ -105,7 +110,12 @@ def test_archive_restoration_regular_file_attributes(
     assert archive_restoration.filesystem_path == file_with_leading_slash
     assert archive_restoration.archive_path == file_without_leading_slash
     assert archive_restoration.strip_components == 3
-    assert archive_restoration.bak_path
+    assert archive_restoration.old_path.startswith(
+        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.old-")
+    )
+    assert archive_restoration.new_path.startswith(
+        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.new-")
+    )
 
     assert os.path.isdir(archive_restoration.temporary_path)
     assert os.stat(archive_restoration.temporary_path).st_mode == 16832
@@ -134,6 +144,7 @@ def test_archive_restoration_restore_regular_file_not_exists(
     workspace_directory: Generator[str, None, None],
 ):
     path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
+    os.unlink(path)
 
     archive_restoration = ArchiveRestoration(
         archive=archives[0],
@@ -142,22 +153,23 @@ def test_archive_restoration_restore_regular_file_not_exists(
     )
 
     spy_lexists = mocker.spy(os.path, "lexists")
-    mock_move = mocker.patch.object(
-        shutil, "move", return_value=None
-    )  # Don't actually move temporary path to filesystem path
+    spy_rename = mocker.spy(os, "rename")
+    spy_move = mocker.spy(shutil, "move")
 
-    archive_restoration.filesystem_path = "/tmp/doesnotexist"  # Temporarily override so that os.path.lexists returns False
     archive_restoration.replace()
 
+    spy_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "test2.txt",
+        archive_restoration.new_path,
+    )
+    assert spy_rename.call_args_list[-1] == mocker.call(
+        archive_restoration.new_path, archive_restoration.filesystem_path
+    )
     spy_lexists.assert_has_calls(
         [
             mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
+            mocker.call(archive_restoration.old_path),
         ],
-    )
-    mock_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "test2.txt",
-        archive_restoration.filesystem_path,
     )
 
 
@@ -182,21 +194,24 @@ def test_archive_restoration_restore_regular_file_exists(
 
     archive_restoration.replace()
 
+    spy_shutil_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "test2.txt",
+        archive_restoration.new_path,
+    )
     spy_lexists.assert_has_calls(
         [
             mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
+            mocker.call(archive_restoration.old_path),
         ],
     )
-    assert spy_rename.call_args_list[0] == mocker.call(
-        archive_restoration.filesystem_path, archive_restoration.bak_path
+    assert spy_rename.call_args_list[-2] == mocker.call(
+        archive_restoration.filesystem_path, archive_restoration.old_path
     )
-    spy_shutil_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "test2.txt",
-        archive_restoration.filesystem_path,
+    assert spy_rename.call_args_list[-1] == mocker.call(
+        archive_restoration.new_path, archive_restoration.filesystem_path
     )
     assert spy_unlink.call_args_list[-1] == mocker.call(
-        archive_restoration.bak_path
+        archive_restoration.old_path
     )
 
 
@@ -207,6 +222,7 @@ def test_archive_restoration_restore_directory_not_exists(
     workspace_directory: Generator[str, None, None],
 ):
     path = os.path.join(workspace_directory, "backmeupdir2")
+    shutil.rmtree(path)
 
     archive_restoration = ArchiveRestoration(
         archive=archives[0],
@@ -215,22 +231,23 @@ def test_archive_restoration_restore_directory_not_exists(
     )
 
     spy_lexists = mocker.spy(os.path, "lexists")
-    mock_move = mocker.patch.object(
-        shutil, "move", return_value=None
-    )  # Don't actually move temporary path to filesystem path
+    spy_rename = mocker.spy(os, "rename")
+    spy_move = mocker.spy(shutil, "move")
 
-    archive_restoration.filesystem_path = "/tmp/doesnotexist"  # Temporarily override so that os.path.lexists returns False
     archive_restoration.replace()
 
+    spy_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "backmeupdir2",
+        archive_restoration.new_path,
+    )
+    assert spy_rename.call_args_list[-1] == mocker.call(
+        archive_restoration.new_path, archive_restoration.filesystem_path
+    )
     spy_lexists.assert_has_calls(
         [
             mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
+            mocker.call(archive_restoration.old_path),
         ],
-    )
-    mock_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "backmeupdir2",
-        archive_restoration.filesystem_path,
     )
 
 
@@ -255,17 +272,20 @@ def test_archive_restoration_restore_directory_exists(
 
     archive_restoration.replace()
 
+    spy_shutil_move.assert_called_once_with(
+        archive_restoration.temporary_path + "/" + "backmeupdir2",
+        archive_restoration.new_path,
+    )
     spy_lexists.assert_has_calls(
         [
             mocker.call(archive_restoration.filesystem_path),
-            mocker.call(archive_restoration.bak_path),
+            mocker.call(archive_restoration.old_path),
         ],
     )
-    assert spy_rename.call_args_list[0] == mocker.call(
-        archive_restoration.filesystem_path, archive_restoration.bak_path
+    assert spy_rename.call_args_list[-2] == mocker.call(
+        archive_restoration.filesystem_path, archive_restoration.old_path
     )
-    spy_shutil_move.assert_called_once_with(
-        archive_restoration.temporary_path + "/" + "backmeupdir2",
-        archive_restoration.filesystem_path,
+    assert spy_rename.call_args_list[-1] == mocker.call(
+        archive_restoration.new_path, archive_restoration.filesystem_path
     )
-    spy_shutil_rmtree.assert_called_once_with(archive_restoration.bak_path)
+    spy_shutil_rmtree.assert_called_once_with(archive_restoration.old_path)

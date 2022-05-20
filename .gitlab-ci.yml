@@ -1,4 +1,4 @@
-image: debian:buster
+image: debian:bullseye
 
 stages:
   - test
@@ -6,7 +6,7 @@ stages:
 
 styling test:
   stage: test
-  image: python:3.7
+  image: python:3.9
   script:
     - pip install --no-cache-dir -r requirements/dev.txt
     - mypy . --junit-xml report-mypy.xml
@@ -20,15 +20,15 @@ styling test:
 
 unit test:
   stage: test
-  image: python:3.7
+  image: python:3.9
   script:
     - echo 'deb https://deb.cyberfusion.nl/ stable main' > /etc/apt/sources.list.d/cyberfusion-packages.list
     - apt-key adv --fetch-keys https://deb.cyberfusion.nl/cfpkg.gpg
     - apt update
-    - apt -y install python-cyberfusion-common
-    - echo 'deb http://debmirror.tuxis.nl/debian buster-backports main' > /etc/apt/sources.list.d/backports.list
+    - apt -y install python-cyberfusion-common python3-cached-property
+    - echo 'deb http://debmirror.tuxis.nl/debian bullseye-backports main' > /etc/apt/sources.list.d/backports.list
     - apt update
-    - apt install -y borgbackup -t buster-backports
+    - apt install -y borgbackup -t bullseye-backports
     - pip install --no-cache-dir -r requirements/test.txt
     - cp $CI_PROJECT_DIR/progress_file_with_known_types.txt /tmp/progress_file_with_known_types.txt
     - cp $CI_PROJECT_DIR/progress_file_with_unknown_types.txt /tmp/progress_file_with_unknown_types.txt
@@ -49,7 +49,7 @@ build test:
     - mk-build-deps -i -t 'apt -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - dpkg-buildpackage -us -uc
     - dpkg-genchanges > ../pkg.changes
-    - lintian --dont-check-part=manpages ../pkg.changes
+    - lintian ../pkg.changes
 
 build:
   stage: build

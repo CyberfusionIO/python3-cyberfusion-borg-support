@@ -8,6 +8,8 @@ from enum import Enum
 from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
+from cached_property import cached_property
+
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
     BorgLoggedCommand,
@@ -436,10 +438,35 @@ class ArchiveRestoration:
 
         return temporary_path
 
-    @property
-    def bak_path(self) -> str:
-        """Set bak path."""
-        return self.filesystem_path + ".bak"
+    @cached_property
+    def old_path(self) -> str:
+        """Set old path."""
+
+        # Add dot prefix to prevent access, and add random string in case filesystem
+        # object without random string already exists
+
+        return os.path.join(
+            Path(self.filesystem_path).parent,
+            "."
+            + os.path.basename(self.filesystem_path)
+            + ".old-"
+            + generate_random_string(8),
+        )
+
+    @cached_property
+    def new_path(self) -> str:
+        """Set new path."""
+
+        # Add dot prefix to prevent access, and add random string in case filesystem
+        # object without random string already exists
+
+        return os.path.join(
+            Path(self.filesystem_path).parent,
+            "."
+            + os.path.basename(self.filesystem_path)
+            + ".new-"
+            + generate_random_string(8),
+        )
 
     @property
     def strip_components(self) -> int:
@@ -457,38 +484,52 @@ class ArchiveRestoration:
     def replace(self) -> None:
         """Replace object on local filesystem with object from archive.
 
-        This should be a nearly race-free process, i.e. there should be almost no
-        downtime when replacing. This is done by following these steps:
-
-        - Filesystem object is extracted from archive to temporary path on the
-          local filesystem.
-        - Current filesystem path on local filesystem is moved to the bak path.
-          The structure is now 'broken'.
-        - The filesystem object is moved from the temporary path on the local
-          filesystem to the filesystem path on the local filesystem. The structure
-          is now 'restored'.
-
-        This procedure is also followed for regular files. Unlike non-empty
-        directories, regular files can be overwritten without having to ensure
-        the filesystem object does not exist at the path, unless the regular
-        file is write-protected (e.g. if it has permissions 0400).
+        This is a nearly atomic process. I.e. there is almost no downtime when
+        replacing.
         """
+
+        # Extract archive. The filesystem path remains untouched until this is
+        # completed. This ensures that the filesystem is not left in a broken
+        # state if the extraction fails.
+
         self.extract()
 
-        if os.path.lexists(self.filesystem_path):
-            os.rename(self.filesystem_path, self.bak_path)
+        # Move the extracted filesystem objects to the new path. As these may be
+        # on different filesystems, the move could take a while. We restore to the
+        # new path instead of to the filesystem path. If we restored to the filesystem
+        # path, we would have to get the original filesystem object out of the way,
+        # leaving the filesystem structure in a 'broken' state, while the move could
+        # take a while. In order to prevent downtime, we restore to this temporary
+        # new directory first.
 
         shutil.move(
             os.path.join(
                 self.temporary_path, os.path.basename(self.archive_path)
             ),
-            self.filesystem_path,
+            self.new_path,
         )
 
-        if os.path.lexists(self.bak_path):
+        # If the filesystem path already exists, move it out of the way so that
+        # we can move the new path to it. This procedure is also followed for
+        # regular files. Unlike non-empty directories, regular files can be
+        # overwritten without having to ensure the filesystem object does not
+        # exist at the path, unless the regular file is write-protected (e.g.
+        # if it has permissions 0400).
+
+        if os.path.lexists(self.filesystem_path):
+            os.rename(self.filesystem_path, self.old_path)
+
+        # Move the new path to the filesystem path. This completes the restore.
+
+        os.rename(self.new_path, self.filesystem_path)
+
+        # Remove the old path if it exists (it exists if the filesystem path
+        # existed before doing the restore, see above).
+
+        if os.path.lexists(self.old_path):
             if self.type_ == UNIXFileTypes.DIRECTORY:
-                shutil.rmtree(self.bak_path)
+                shutil.rmtree(self.old_path)
 
                 return
 
-            os.unlink(self.bak_path)
+            os.unlink(self.old_path)
