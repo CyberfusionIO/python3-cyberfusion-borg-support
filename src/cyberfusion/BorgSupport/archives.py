@@ -438,13 +438,25 @@ class ArchiveRestoration:
 
     @property
     def old_path(self) -> str:
-        """Set old path."""
-        return self.filesystem_path + ".old"
+        """Set old path.
+
+        Add dot prefix to prevent access.
+        """
+        return os.path.join(
+            Path(self.filesystem_path).parent,
+            "." + os.path.basename(self.filesystem_path) + ".old",
+        )
 
     @property
     def new_path(self) -> str:
-        """Set new path."""
-        return self.filesystem_path + ".new"
+        """Set new path.
+
+        Add dot prefix to prevent access.
+        """
+        return os.path.join(
+            Path(self.filesystem_path).parent,
+            "." + os.path.basename(self.filesystem_path) + ".new",
+        )
 
     @property
     def strip_components(self) -> int:
