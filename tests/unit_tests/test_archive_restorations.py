@@ -65,17 +65,17 @@ def test_archive_restoration_directory_attributes(
     assert archive_restoration._path == dir2_with_leading_slash
     assert not archive_restoration._enforce_home_directory
     assert archive_restoration.temporary_path.startswith(
-        f"{workspace_directory}/.archive-restore-"
+        f"{workspace_directory}/.archive-restore-tmp.backmeupdir2-"
     )
     assert archive_restoration.type_ == UNIXFileTypes.DIRECTORY
     assert archive_restoration.filesystem_path == dir2_with_leading_slash
     assert archive_restoration.archive_path == dir2_without_leading_slash
     assert archive_restoration.strip_components == 2
     assert archive_restoration.old_path.startswith(
-        os.path.join(workspace_directory, ".backmeupdir2.old-")
+        os.path.join(workspace_directory, ".archive-restore-old.backmeupdir2-")
     )
     assert archive_restoration.new_path.startswith(
-        os.path.join(workspace_directory, ".backmeupdir2.new-")
+        os.path.join(workspace_directory, ".archive-restore-new.backmeupdir2-")
     )
 
     assert os.path.isdir(archive_restoration.temporary_path)
@@ -104,17 +104,25 @@ def test_archive_restoration_regular_file_attributes(
     assert archive_restoration._path == file_with_leading_slash
     assert not archive_restoration._enforce_home_directory
     assert archive_restoration.temporary_path.startswith(
-        f"{workspace_directory}/.archive-restore-"
+        f"{workspace_directory}/.archive-restore-tmp.test2.txt-"
     )
     assert archive_restoration.type_ == UNIXFileTypes.REGULAR_FILE
     assert archive_restoration.filesystem_path == file_with_leading_slash
     assert archive_restoration.archive_path == file_without_leading_slash
     assert archive_restoration.strip_components == 3
     assert archive_restoration.old_path.startswith(
-        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.old-")
+        os.path.join(
+            workspace_directory,
+            "backmeupdir2",
+            ".archive-restore-old.test2.txt-",
+        )
     )
     assert archive_restoration.new_path.startswith(
-        os.path.join(workspace_directory, "backmeupdir2", ".test2.txt.new-")
+        os.path.join(
+            workspace_directory,
+            "backmeupdir2",
+            ".archive-restore-new.test2.txt-",
+        )
     )
 
     assert os.path.isdir(archive_restoration.temporary_path)

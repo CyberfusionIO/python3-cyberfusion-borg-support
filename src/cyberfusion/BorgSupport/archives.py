@@ -344,6 +344,10 @@ class ArchiveRestoration:
     slash is automatically stripped when referencing the file in the archive.
     """
 
+    # Ensure all restore-related directories start with this prefix. The prefix
+    # might be used by other systems to recognise directories that are related
+    # to a Borg archive restore.
+
     PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore-"
 
     def __init__(
@@ -428,7 +432,11 @@ class ArchiveRestoration:
         """Generate and create temporary path."""
         temporary_path = os.path.join(
             root_path,
-            self.PREFIX_RESTORE_FILESYSTEM_OBJECT + generate_random_string(),
+            self.PREFIX_RESTORE_FILESYSTEM_OBJECT
+            + "tmp."
+            + os.path.basename(self.filesystem_path)
+            + "-"
+            + generate_random_string(8),
         )
 
         os.mkdir(temporary_path)
@@ -445,9 +453,10 @@ class ArchiveRestoration:
 
         return os.path.join(
             Path(self.filesystem_path).parent,
-            "."
+            self.PREFIX_RESTORE_FILESYSTEM_OBJECT
+            + "old."
             + os.path.basename(self.filesystem_path)
-            + ".old-"
+            + "-"
             + generate_random_string(8),
         )
 
@@ -460,9 +469,10 @@ class ArchiveRestoration:
 
         return os.path.join(
             Path(self.filesystem_path).parent,
-            "."
+            self.PREFIX_RESTORE_FILESYSTEM_OBJECT
+            + "new."
             + os.path.basename(self.filesystem_path)
-            + ".new-"
+            + "-"
             + generate_random_string(8),
         )
 
