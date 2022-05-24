@@ -344,7 +344,7 @@ class ArchiveRestoration:
     slash is automatically stripped when referencing the file in the archive.
     """
 
-    PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore"
+    PREFIX_RESTORE_FILESYSTEM_OBJECT = ".archive-restore-"
 
     def __init__(
         self,
@@ -428,9 +428,7 @@ class ArchiveRestoration:
         """Generate and create temporary path."""
         temporary_path = os.path.join(
             root_path,
-            self.PREFIX_RESTORE_FILESYSTEM_OBJECT
-            + "-"
-            + generate_random_string(),
+            self.PREFIX_RESTORE_FILESYSTEM_OBJECT + generate_random_string(),
         )
 
         os.mkdir(temporary_path)
