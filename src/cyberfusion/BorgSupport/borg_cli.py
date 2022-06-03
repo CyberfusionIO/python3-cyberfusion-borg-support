@@ -36,6 +36,7 @@ class BorgCommand:
     SUBCOMMAND_INIT = "init"
     SUBCOMMAND_CREATE = "create"
     SUBCOMMAND_EXPORT_TAR = "export-tar"
+    SUBCOMMAND_WITH_LOCK = "with-lock"
 
 
 def _get_rsh_argument(identity_file_path: str) -> List[str]:
@@ -69,6 +70,7 @@ class BorgRegularCommand:
         identity_file_path: Optional[str] = None,
         environment: Optional[Dict[str, str]] = None,
         run: bool = True,
+        capture_stderr: bool = False,
     ) -> None:
         """Set attributes and execute command."""
         self.command = [BorgCommand.BORG_BIN]
@@ -99,12 +101,14 @@ class BorgRegularCommand:
         output = CyberfusionCommand(
             self.command,
             environment=environment,
+            capture_stderr=capture_stderr,
         )
 
         # Set attributes
 
         self.rc = output.rc
         self.stdout = output.stdout
+        self.stderr = output.stderr
 
         # Cast if JSON
 

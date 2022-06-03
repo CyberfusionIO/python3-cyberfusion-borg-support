@@ -1,5 +1,6 @@
 """Classes for managing repositories."""
 
+import json
 import os
 from enum import Enum
 from typing import Dict, List, Optional, Union
@@ -11,6 +12,7 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
+from cyberfusion.BorgSupport.operations import JSONLineType, MessageIDs
 from cyberfusion.Common.Command import CommandNonZeroError, CyberfusionCommand
 from cyberfusion.Common.Filesystem import get_directory_size
 
@@ -20,6 +22,7 @@ DEFAULT_PORT_SSH = 22
 CHARACTER_AT = "@"
 
 CAT_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "cat")
+TRUE_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "true")
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -161,6 +164,48 @@ class Repository:
             return False
 
         return True
+
+    @property
+    def is_locked(self) -> bool:
+        """Get if repository is locked by Borg.
+
+        Borg does not provide a more neat way of checking this than below.
+        """
+
+        # Construct arguments
+
+        arguments = ["--log-json", self.path, TRUE_BIN]
+
+        # Execute command
+
+        command = BorgRegularCommand()
+
+        try:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_WITH_LOCK,
+                arguments=arguments,
+                capture_stderr=True,
+                **self._safe_cli_options,
+            )
+        except CommandNonZeroError as e:
+            # When RC is not 0, Borg will most likely have logged something. If
+            # any of these log lines say that the command failed because there
+            # was a lock, return False.
+
+            for line in e.stderr.splitlines():
+                line = json.loads(line)
+
+                if line["type"] != JSONLineType.LOG_MESSAGE.value:
+                    continue
+
+                if line["msgid"] != MessageIDs.LOCK_TIMEOUT.value:
+                    continue
+
+                return True
+
+        # RC is 0, so there was no lock
+
+        return False
 
     @property
     def size(self) -> int:

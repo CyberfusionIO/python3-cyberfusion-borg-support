@@ -82,6 +82,83 @@ def test_repository_size(
     assert repository_init.size
 
 
+def test_repository_not_locked(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    assert not repository_init.is_locked
+
+
+def test_repository_locked(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    with patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        side_effect=CommandNonZeroError(
+            command=[
+                BorgCommand.BORG_BIN,
+                "with-lock",
+                "--log-json",
+                repository_init.path,
+                "/bin/true",
+            ],
+            stdout=None,
+            stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
+            rc=2,
+        ),
+    ):
+        result = repository_init.is_locked
+
+    assert result is True
+
+
+def test_repository_not_locked_line_type(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that repository is not marked as locked because of type in line."""
+    with patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        side_effect=CommandNonZeroError(
+            command=[
+                BorgCommand.BORG_BIN,
+                "with-lock",
+                "--log-json",
+                repository_init.path,
+                "/bin/true",
+            ],
+            stdout=None,
+            stderr='{"type": "progress_percent", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
+            rc=2,
+        ),
+    ):
+        result = repository_init.is_locked
+
+    assert result is False
+
+
+def test_repository_not_locked_line_msgid(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that repository is not marked as locked because of msgid in line."""
+    with patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        side_effect=CommandNonZeroError(
+            command=[
+                BorgCommand.BORG_BIN,
+                "with-lock",
+                "--log-json",
+                repository_init.path,
+                "/bin/true",
+            ],
+            stdout=None,
+            stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockError"}',
+            rc=2,
+        ),
+    ):
+        result = repository_init.is_locked
+
+    assert result is False
+
+
 def test_repository_remote_size(
     passphrase_file: Generator[str, None, None]
 ) -> None:
