@@ -14,7 +14,17 @@ class JSONLineType(Enum):
     PROGRESS_MESSAGE = "progress_message"
     PROGRESS_PERCENT = "progress_percent"
     # FILE_STATUS = "file_status"
-    # LOG_MESSAGE = "log_message"
+    LOG_MESSAGE = "log_message"
+
+
+class MessageIDs(Enum):
+    """Message IDs.
+
+    From https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#message-ids
+    """
+
+    # LOCK_ERROR = "LockError"  # Documented
+    LOCK_TIMEOUT = "LockTimeout"  # Not documented
 
 
 class ArchiveProgressLine:
