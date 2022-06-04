@@ -1,6 +1,12 @@
 """Generic exceptions."""
 
 
+class RepositoryLockedError(Exception):
+    """Exception to raise if repository is locked."""
+
+    pass
+
+
 class RepositoryNotLocalError(Exception):
     """Exception to raise if repository is not on local filesystem when this is required."""
 

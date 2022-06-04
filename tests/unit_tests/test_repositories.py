@@ -4,10 +4,12 @@ from typing import Generator, List
 from unittest.mock import patch
 
 import pytest
+from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand
 from cyberfusion.BorgSupport.exceptions import (
+    RepositoryLockedError,
     RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
@@ -211,6 +213,34 @@ def test_repository_init_already_exists(
         repository_init.create(encryption="keyfile-blake2")
 
 
+def test_repository_init_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.create(encryption="keyfile-blake2")
+
+    mocker.stopall()  # Unlock for teardown
+
+
+def test_repository_check_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.check()
+
+    mocker.stopall()  # Unlock for teardown
+
+
 def test_repository_check_has_integrity(
     repository_init: Generator[Repository, None, None]
 ) -> None:
@@ -234,6 +264,20 @@ def test_repository_check_has_no_integrity(
     assert result is False
 
 
+def test_repository_prune_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.prune()
+
+    mocker.stopall()  # Unlock for teardown
+
+
 def test_repository_prune(
     repository_init: Generator[Repository, None, None]
 ) -> None:
@@ -242,3 +286,17 @@ def test_repository_prune(
     repository_init.prune(keep_weekly=1)
     repository_init.prune(keep_monthly=1)
     repository_init.prune(keep_yearly=1)
+
+
+def test_repository_delete_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.delete()
+
+    mocker.stopall()  # Unlock for teardown
