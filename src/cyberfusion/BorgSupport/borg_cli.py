@@ -21,10 +21,22 @@ def get_borg_bin() -> str:
     return system_path
 
 
+def get_true_bin() -> str:
+    """Return 'true' binary in either system or user binary directory."""
+    system_path = os.path.join(CyberfusionCommand.PATH_BIN, "true")
+    user_path = os.path.join(CyberfusionCommand.PATH_USR_BIN, "true")
+
+    if os.path.isfile(system_path):
+        return system_path
+
+    return user_path
+
+
 class BorgCommand:
     """Constants for Borg CLI."""
 
     BORG_BIN = get_borg_bin()
+    TRUE_BIN = get_true_bin()
 
     # Subcommands
 

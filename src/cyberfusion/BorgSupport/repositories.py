@@ -23,8 +23,6 @@ DEFAULT_PORT_SSH = 22
 CHARACTER_AT = "@"
 
 CAT_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "cat")
-# TRUE_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "true")
-TRUE_BIN = os.path.join("/usr/bin/true")
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -193,7 +191,7 @@ class Repository:
 
         # Construct arguments
 
-        arguments = ["--log-json", self.path, TRUE_BIN]
+        arguments = ["--log-json", self.path, BorgCommand.TRUE_BIN]
 
         # Execute command
 
