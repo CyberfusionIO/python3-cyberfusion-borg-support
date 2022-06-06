@@ -49,6 +49,7 @@ class BorgCommand:
     SUBCOMMAND_CREATE = "create"
     SUBCOMMAND_EXPORT_TAR = "export-tar"
     SUBCOMMAND_WITH_LOCK = "with-lock"
+    SUBCOMMAND_VERSION = "--version"
 
 
 def _get_rsh_argument(identity_file_path: str) -> List[str]:
@@ -111,7 +112,7 @@ class BorgRegularCommand:
             return
 
         output = CyberfusionCommand(
-            self.command,
+            command=self.command,
             environment=environment,
             capture_stderr=capture_stderr,
         )
