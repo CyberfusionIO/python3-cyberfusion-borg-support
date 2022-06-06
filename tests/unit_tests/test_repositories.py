@@ -354,6 +354,38 @@ def test_repository_prune(
     repository_init.prune(keep_yearly=1)
 
 
+def test_repository_prune_compacted_from_120(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that compact was called with Borg version >= 1.2.0."""
+    mocker.patch(
+        "cyberfusion.BorgSupport.Borg.version",
+        new=mocker.PropertyMock(return_value=(1, 2, 1)),
+    )
+
+    spy_compact = mocker.spy(repository_init, "compact")
+
+    repository_init.prune(keep_yearly=1)
+
+    spy_compact.assert_called_once()
+
+
+def test_repository_prune_not_compacted_before_120(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that compact was not called with Borg version < 1.2.0."""
+    mocker.patch(
+        "cyberfusion.BorgSupport.Borg.version",
+        new=mocker.PropertyMock(return_value=(1, 1, 8)),
+    )
+
+    spy_compact = mocker.spy(repository_init, "compact")
+
+    repository_init.prune(keep_yearly=1)
+
+    spy_compact.assert_not_called()
+
+
 def test_repository_delete_locked(
     mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
