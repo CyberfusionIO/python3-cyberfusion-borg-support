@@ -1,7 +1,7 @@
 import os
 import shutil
-from typing import Generator, List
-from unittest.mock import patch
+from typing import Dict, Generator, List, Optional
+from unittest import mock
 
 import pytest
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
@@ -93,20 +93,36 @@ def test_repository_not_locked(
 def test_repository_locked(
     repository_init: Generator[Repository, None, None]
 ) -> None:
-    with patch(
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "with-lock":
+            raise CommandNonZeroError(
+                command=[
+                    BorgCommand.BORG_BIN,
+                    "with-lock",
+                    "--log-json",
+                    repository_init.path,
+                    "/bin/true",
+                ],
+                stdout=None,
+                stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
-        side_effect=CommandNonZeroError(
-            command=[
-                BorgCommand.BORG_BIN,
-                "with-lock",
-                "--log-json",
-                repository_init.path,
-                "/bin/true",
-            ],
-            stdout=None,
-            stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-            rc=2,
-        ),
+        side_effect=execute_side_effect,
     ):
         result = repository_init.is_locked
 
@@ -117,20 +133,37 @@ def test_repository_not_locked_line_type(
     repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that repository is not marked as locked because of type in line."""
-    with patch(
+
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "with-lock":
+            raise CommandNonZeroError(
+                command=[
+                    BorgCommand.BORG_BIN,
+                    "with-lock",
+                    "--log-json",
+                    repository_init.path,
+                    "/bin/true",
+                ],
+                stdout=None,
+                stderr='{"type": "progress_percent", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
-        side_effect=CommandNonZeroError(
-            command=[
-                BorgCommand.BORG_BIN,
-                "with-lock",
-                "--log-json",
-                repository_init.path,
-                "/bin/true",
-            ],
-            stdout=None,
-            stderr='{"type": "progress_percent", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-            rc=2,
-        ),
+        side_effect=execute_side_effect,
     ):
         result = repository_init.is_locked
 
@@ -141,20 +174,37 @@ def test_repository_not_locked_line_msgid(
     repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that repository is not marked as locked because of msgid in line."""
-    with patch(
+
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "with-lock":
+            raise CommandNonZeroError(
+                command=[
+                    BorgCommand.BORG_BIN,
+                    "with-lock",
+                    "--log-json",
+                    repository_init.path,
+                    "/bin/true",
+                ],
+                stdout=None,
+                stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockError"}',
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
-        side_effect=CommandNonZeroError(
-            command=[
-                BorgCommand.BORG_BIN,
-                "with-lock",
-                "--log-json",
-                repository_init.path,
-                "/bin/true",
-            ],
-            stdout=None,
-            stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockError"}',
-            rc=2,
-        ),
+        side_effect=execute_side_effect,
     ):
         result = repository_init.is_locked
 
@@ -250,14 +300,30 @@ def test_repository_check_has_integrity(
 def test_repository_check_has_no_integrity(
     repository_init: Generator[Repository, None, None]
 ) -> None:
-    with patch(
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "check":
+            raise CommandNonZeroError(
+                command=[BorgCommand.BORG_BIN, "check", repository_init.path],
+                stdout=None,
+                stderr=None,
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
-        side_effect=CommandNonZeroError(
-            command=[BorgCommand.BORG_BIN, "check", repository_init.path],
-            stdout=None,
-            stderr=None,
-            rc=2,
-        ),
+        side_effect=execute_side_effect,
     ):
         result = repository_init.check()
 
