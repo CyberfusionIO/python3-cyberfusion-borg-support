@@ -10,7 +10,33 @@ from cyberfusion.BorgSupport.archives import (
     ArchiveRestoration,
     UNIXFileTypes,
 )
+from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.repositories import Repository
+
+
+def test_archive_restoration_replace_locked(
+    mocker: MockerFixture,
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+):
+    path = os.path.join(workspace_directory, "backmeupdir2", "test2.txt")
+
+    archive_restoration = ArchiveRestoration(
+        archive=archives[0],
+        path=path,
+        temporary_path_root_path=workspace_directory,
+    )
+
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        archive_restoration.replace()
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_archive_restoration_path_no_leading_slash(

@@ -167,7 +167,6 @@ class Repository:
         )
 
     @property
-    # @check_repository_not_locked  # Decorator not supported with property
     def exists(self) -> bool:
         """Determine if repository exists.
 
@@ -243,7 +242,6 @@ class Repository:
         return get_directory_size(self.path)
 
     @property
-    # @check_repository_not_locked  # Decorator not supported with property
     def archives(self) -> List[Archive]:
         """Get archives in repository."""
         results = []

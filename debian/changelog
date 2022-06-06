@@ -1,6 +1,14 @@
+python-cyberfusion-borg-support (1.3.4.2) unstable; urgency=low
+
+  - Check Repository.is_locked before performing actions for
+    archives
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Mon, 6 Jun 2022 12:16:00 +0200
+
 python-cyberfusion-borg-support (1.3.4.1) unstable; urgency=low
 
-  - Check Repository.is_locked before performing actions
+  - Check Repository.is_locked before performing actions for
+    repositories
 
  -- William Edwards <wedwards@cyberfusion.nl>  Mon, 6 Jun 2022 10:54:00 +0200
 
