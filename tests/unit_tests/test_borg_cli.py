@@ -11,6 +11,7 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
     _get_rsh_argument,
     get_borg_bin,
+    get_true_bin,
 )
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common.Command import CommandNonZeroError
@@ -50,6 +51,42 @@ def test_borg_bin_system(mocker: MockerFixture) -> None:
     )
 
     assert get_borg_bin() == "/usr/bin/borg"
+
+
+def test_true_bin_system(mocker: MockerFixture) -> None:
+    def isfile_side_effect(path: str) -> bool:
+        """Pretend that /bin/true and /usr/bin/true both exist."""
+        if path == "/bin/true":
+            return True
+
+        elif path == "/usr/bin/true":
+            return True
+
+        return os.path.isfile(path)
+
+    mocker.patch(
+        "os.path.isfile", new=mocker.Mock(side_effect=isfile_side_effect)
+    )
+
+    assert get_true_bin() == "/bin/true"
+
+
+def test_true_bin_user(mocker: MockerFixture) -> None:
+    def isfile_side_effect(path: str) -> bool:
+        """Pretend that /bin/true does not exist, and /usr/bin/true exists."""
+        if path == "/bin/true":
+            return False
+
+        elif path == "/usr/bin/true":
+            return True
+
+        return os.path.isfile(path)
+
+    mocker.patch(
+        "os.path.isfile", new=mocker.Mock(side_effect=isfile_side_effect)
+    )
+
+    assert get_true_bin() == "/usr/bin/true"
 
 
 def test_borg_regular_command_attributes_stdout(

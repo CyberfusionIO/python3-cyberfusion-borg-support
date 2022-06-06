@@ -3,12 +3,13 @@
 import json
 import os
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
 
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
 from cyberfusion.BorgSupport.exceptions import (
+    RepositoryLockedError,
     RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
@@ -22,7 +23,20 @@ DEFAULT_PORT_SSH = 22
 CHARACTER_AT = "@"
 
 CAT_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "cat")
-TRUE_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "true")
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def check_repository_not_locked(f: F) -> Any:
+    """Check that repository is not locked."""
+
+    def wrapper(self: Any, *args: tuple, **kwargs: dict) -> Any:
+        if self.is_locked:
+            raise RepositoryLockedError
+
+        return f(self, *args, **kwargs)
+
+    return wrapper
 
 
 class BorgRepositoryEncryptionName(Enum):
@@ -120,6 +134,7 @@ class Repository:
             "identity_file_path": self.identity_file_path,
         }
 
+    @check_repository_not_locked
     def create(self, *, encryption: BorgRepositoryEncryptionName) -> None:
         """Create repository."""
 
@@ -135,6 +150,7 @@ class Repository:
             **self._safe_cli_options,
         )
 
+    @check_repository_not_locked
     def delete(self) -> None:
         """Delete repository."""
 
@@ -151,6 +167,7 @@ class Repository:
         )
 
     @property
+    # @check_repository_not_locked  # Decorator not supported with property
     def exists(self) -> bool:
         """Determine if repository exists.
 
@@ -174,7 +191,7 @@ class Repository:
 
         # Construct arguments
 
-        arguments = ["--log-json", self.path, TRUE_BIN]
+        arguments = ["--log-json", self.path, BorgCommand.TRUE_BIN]
 
         # Execute command
 
@@ -226,6 +243,7 @@ class Repository:
         return get_directory_size(self.path)
 
     @property
+    # @check_repository_not_locked  # Decorator not supported with property
     def archives(self) -> List[Archive]:
         """Get archives in repository."""
         results = []
@@ -255,6 +273,7 @@ class Repository:
 
         return results
 
+    @check_repository_not_locked
     def check(self) -> bool:
         """Check repository.
 
@@ -278,6 +297,7 @@ class Repository:
 
         return True
 
+    @check_repository_not_locked
     def prune(
         self,
         *,
