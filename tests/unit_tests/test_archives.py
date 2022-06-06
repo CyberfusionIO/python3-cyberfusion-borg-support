@@ -5,10 +5,31 @@ from pathlib import Path
 from typing import Generator, List
 
 import pytest
+from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport.archives import Archive, UNIXFileTypes
+from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common.Command import CommandNonZeroError
+
+
+def test_archive_extract_locked(
+    mocker: MockerFixture,
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        archives[0].extract(
+            destination_path="/tmp",
+            restore_paths=[],
+        )
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_archive_extract(
@@ -38,6 +59,26 @@ def test_archive_extract(
     assert open(f"/tmp/{dir2}/test2.txt", "r").read() == "Hi! 2"
     assert os.readlink(f"/tmp/{dir2}/symlink.txt") == f"/{dir2}/test2.txt"
     assert not os.path.exists(f"/tmp/{dir1}/pleaseexcludeme")
+
+
+def test_archive_export_tar_locked(
+    mocker: MockerFixture,
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        archives[0].export_tar(
+            destination_path=f"{workspace_directory}/mytar.tar.gz",
+            restore_paths=[],
+            strip_components=1,
+        )
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_archive_export_tar(
@@ -75,6 +116,42 @@ def test_archive_export_tar(
             str(Path(*Path(f"{dir2}/test2.txt").parts[1:])),
         ]
     )
+
+
+def test_archive_create_locked(
+    mocker: MockerFixture,
+    repository_init: Generator[Repository, None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    archive = Archive(
+        repository=repository_init, name="test", comment="Free-form comment!"
+    )
+
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        archive.create(paths=[], excludes=[])
+
+    mocker.stopall()  # Unlock for teardown
+
+
+def test_archive_contents_locked(
+    mocker: MockerFixture,
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        archives[0].contents(path=None)
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_archive_contents(

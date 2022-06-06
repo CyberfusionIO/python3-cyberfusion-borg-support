@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime
 from enum import Enum
 from pathlib import Path, PosixPath
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, TypeVar
 
 from cached_property import cached_property
 
@@ -15,11 +15,38 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
 )
+from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.Common import generate_random_string
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def archive_check_repository_not_locked(f: F) -> Any:
+    """Check that repository is not locked for Archive class."""
+
+    def wrapper(self: Any, *args: tuple, **kwargs: dict) -> Any:
+        if self.repository.is_locked:
+            raise RepositoryLockedError
+
+        return f(self, *args, **kwargs)
+
+    return wrapper
+
+
+def archive_restoration_check_repository_not_locked(f: F) -> Any:
+    """Check that repository is not locked for ArchiveRestoration class."""
+
+    def wrapper(self: Any, *args: tuple, **kwargs: dict) -> Any:
+        if self.archive.repository.is_locked:
+            raise RepositoryLockedError
+
+        return f(self, *args, **kwargs)
+
+    return wrapper
 
 
 class UNIXFileTypes(Enum):
@@ -177,6 +204,7 @@ class Archive:
         """
         return self._comment
 
+    @archive_check_repository_not_locked
     def contents(self, *, path: Optional[str]) -> List[FilesystemObject]:
         """Get contents of archive.
 
@@ -213,6 +241,7 @@ class Archive:
 
         return results
 
+    @archive_check_repository_not_locked
     def create(
         self,
         *,
@@ -265,6 +294,7 @@ class Archive:
 
         return Operation(progress_file=command.file)
 
+    @archive_check_repository_not_locked
     def extract(
         self,
         *,
@@ -296,6 +326,7 @@ class Archive:
 
         return Operation(progress_file=command.file), destination_path
 
+    @archive_check_repository_not_locked
     def export_tar(
         self,
         *,
@@ -481,7 +512,8 @@ class ArchiveRestoration:
         """Set amount of components to strip."""
         return len(Path(self.archive_path).parts) - 1
 
-    def extract(self) -> None:
+    # @archive_restoration_check_repository_not_locked  # Function is only for internal use. Caller should already have this decorator.
+    def _extract(self) -> None:
         """Extract archive path to temporary path."""
         self.archive.extract(
             destination_path=self.temporary_path,
@@ -489,6 +521,7 @@ class ArchiveRestoration:
             strip_components=self.strip_components,
         )
 
+    @archive_restoration_check_repository_not_locked
     def replace(self) -> None:
         """Replace object on local filesystem with object from archive.
 
@@ -500,7 +533,7 @@ class ArchiveRestoration:
         # completed. This ensures that the filesystem is not left in a broken
         # state if the extraction fails.
 
-        self.extract()
+        self._extract()
 
         # Move the extracted filesystem objects to the new path. As these may be
         # on different filesystems, the move could take a while. We restore to the
