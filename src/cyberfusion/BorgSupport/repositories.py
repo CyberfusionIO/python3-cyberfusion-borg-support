@@ -335,3 +335,22 @@ class Repository:
             arguments=arguments,
             **self._safe_cli_options,
         )
+
+    @check_repository_not_locked
+    def compact(self) -> None:
+        """Compact repository.
+
+        Run after deleting archives. See: https://borgbackup.readthedocs.io/en/stable/usage/notes.html#separate-compaction
+        """
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
+        BorgRegularCommand().execute(
+            command=BorgCommand.SUBCOMMAND_COMPACT,
+            arguments=arguments,
+            **self._safe_cli_options,
+        )

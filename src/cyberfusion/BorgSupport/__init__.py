@@ -27,6 +27,7 @@ class Borg:
         _, version = command.stdout.split(" ")
 
         # Remove trailing newline from version
+
         version = version.rstrip()
 
         # Split version parts

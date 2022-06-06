@@ -366,3 +366,23 @@ def test_repository_delete_locked(
         repository_init.delete()
 
     mocker.stopall()  # Unlock for teardown
+
+
+def test_repository_compact_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.compact()
+
+    mocker.stopall()  # Unlock for teardown
+
+
+def test_repository_compact(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    repository_init.compact()

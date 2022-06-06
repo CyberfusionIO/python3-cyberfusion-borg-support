@@ -49,6 +49,7 @@ class BorgCommand:
     SUBCOMMAND_CREATE = "create"
     SUBCOMMAND_EXPORT_TAR = "export-tar"
     SUBCOMMAND_WITH_LOCK = "with-lock"
+    SUBCOMMAND_COMPACT = "compact"
     SUBCOMMAND_VERSION = "--version"
 
 
