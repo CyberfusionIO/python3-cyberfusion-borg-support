@@ -205,11 +205,18 @@ class Archive:
         return self._comment
 
     @archive_check_repository_not_locked
-    def contents(self, *, path: Optional[str]) -> List[FilesystemObject]:
+    def contents(
+        self, *, path: Optional[str], recursive: bool = True
+    ) -> List[FilesystemObject]:
         """Get contents of archive.
 
         If 'path' is None, no path will be passed to Borg. As far as we are aware,
         this is equal to starting at the root, i.e. specifying '/' as path.
+
+        If 'recursive' is True, all contents from the given path, including
+        those in subdirectories, are returned. This is the default behaviour
+        by Borg. If 'recursive' is False, only the contents in the given path
+        and the filesystem object of the path itself are returned.
 
         Contents are filesystem objects, i.e. directories and files.
         """
@@ -232,10 +239,24 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
-        for (
-            _line
-        ) in command.stdout.splitlines():  # Each line is a JSON document
+        for _line in command.stdout.splitlines():
             line = json.loads(_line)
+
+            # If not recursive, skip if the path of this filesystem object is
+            # not the given path or directly inside the given path. Borg does
+            # not support doing this natively, see the dead end at https://mail.python.org/pipermail/borgbackup/2017q4/000928.html
+
+            if path and not recursive:
+                is_path = line["path"] == path
+
+                path_is_parent = Path(
+                    os.path.join(
+                        os.path.sep, line["path"]
+                    )  # Convert from relative to absolute for check
+                ).parent == PosixPath(os.path.join(os.path.sep, path))
+
+                if not path_is_parent and not is_path:
+                    continue
 
             results.append(FilesystemObject(line))
 

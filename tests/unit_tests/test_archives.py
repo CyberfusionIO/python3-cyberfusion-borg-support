@@ -56,6 +56,8 @@ def test_archive_extract(
     # Test extracted
 
     assert open(f"/tmp/{dir1}/test1.txt", "r").read() == "Hi! 1"
+    assert os.path.isdir(f"/tmp/{dir1}/testdir")
+    assert open(f"/tmp/{dir1}/testdir/test3.txt", "r").read() == "Hi! 3"
     assert open(f"/tmp/{dir2}/test2.txt", "r").read() == "Hi! 2"
     assert os.readlink(f"/tmp/{dir2}/symlink.txt") == f"/{dir2}/test2.txt"
     assert not os.path.exists(f"/tmp/{dir1}/pleaseexcludeme")
@@ -111,6 +113,8 @@ def test_archive_export_tar(
         [
             str(Path(*Path(dir1).parts[1:])),
             str(Path(*Path(f"{dir1}/test1.txt").parts[1:])),
+            str(Path(*Path(f"{dir1}/testdir").parts[1:])),
+            str(Path(*Path(f"{dir1}/testdir/test3.txt").parts[1:])),
             str(Path(*Path(dir2).parts[1:])),
             str(Path(*Path(f"{dir2}/symlink.txt").parts[1:])),
             str(Path(*Path(f"{dir2}/test2.txt").parts[1:])),
@@ -154,7 +158,7 @@ def test_archive_contents_locked(
     mocker.stopall()  # Unlock for teardown
 
 
-def test_archive_contents(
+def test_archive_contents_without_path(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
@@ -165,13 +169,9 @@ def test_archive_contents(
         len(os.path.sep) :
     ]
 
-    # Test archive contents from the root
-    #
-    # Order is unknown
-
     contents = archives[0].contents(path=None)
 
-    assert len(contents) == 5
+    assert len(contents) == 7
 
     assert any(
         content.type_ == UNIXFileTypes.DIRECTORY
@@ -190,6 +190,28 @@ def test_archive_contents(
         and content.user is not None
         and content.group is not None
         and content.path == f"{dir1}/test1.txt"
+        and content.link_target is None
+        and content.modification_time is not None
+        and content.size != 0
+        for content in contents
+    )
+    assert any(
+        content.type_ == UNIXFileTypes.DIRECTORY
+        and content.symbolic_mode is not None
+        and content.user is not None
+        and content.group is not None
+        and content.path == f"{dir1}/testdir"
+        and content.link_target is None
+        and content.modification_time is not None
+        and content.size is None
+        for content in contents
+    )
+    assert any(
+        content.type_ == UNIXFileTypes.REGULAR_FILE
+        and content.symbolic_mode is not None
+        and content.user is not None
+        and content.group is not None
+        and content.path == f"{dir1}/testdir/test3.txt"
         and content.link_target is None
         and content.modification_time is not None
         and content.size != 0
@@ -229,17 +251,32 @@ def test_archive_contents(
         for content in contents
     )
 
+
+def test_archive_contents_with_path(
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+
     # Test archive contents from directory
 
     contents = archives[0].contents(path=dir1)
 
-    assert len(contents) == 2
+    assert len(contents) == 4
 
     assert contents[0].type_ == UNIXFileTypes.DIRECTORY
     assert contents[0].path == dir1
 
     assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
     assert contents[1].path == f"{dir1}/test1.txt"
+
+    assert contents[2].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[2].path == f"{dir1}/testdir"
+
+    assert contents[3].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[3].path == f"{dir1}/testdir/test3.txt"
 
     # Test archive contents from file
 
@@ -249,3 +286,29 @@ def test_archive_contents(
 
     assert contents[0].type_ == UNIXFileTypes.REGULAR_FILE
     assert contents[0].path == f"{dir1}/test1.txt"
+
+
+def test_archive_contents_not_recursive(
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+
+    contents = archives[0].contents(path=dir1, recursive=False)
+
+    assert len(contents) == 3
+
+    # Path itself is included (path_is_parent)
+
+    assert contents[0].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[0].path == dir1
+
+    # 'testdir/test3.txt' is not included, so recursive=False works
+
+    assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[1].path == f"{dir1}/test1.txt"
+
+    assert contents[2].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[2].path == f"{dir1}/testdir"

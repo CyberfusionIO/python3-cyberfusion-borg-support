@@ -98,6 +98,11 @@ def dummy_files(
     with open(f"{dir1}/test1.txt", "w") as f:
         f.write("Hi! 1")
 
+    os.mkdir(f"{dir1}/testdir")
+
+    with open(f"{dir1}/testdir/test3.txt", "w") as f:
+        f.write("Hi! 3")
+
     with open(f"{dir2}/test2.txt", "w") as f:
         f.write("Hi! 2")
 
