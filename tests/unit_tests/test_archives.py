@@ -10,6 +10,7 @@ from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport.archives import Archive, UNIXFileTypes
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
+from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common.Command import CommandNonZeroError
 
@@ -117,13 +118,20 @@ def test_archive_export_tar(
 
     # Export archive to tarball
 
-    operation, destination_path = archives[0].export_tar(
+    operation, destination_path, md5_hash = archives[0].export_tar(
         destination_path=path,
         restore_paths=[dir1, dir2],
         strip_components=1,
     )
 
+    # Test return values
+
+    assert isinstance(operation, Operation)
     assert destination_path == path
+    assert "==" in md5_hash
+
+    # Test file state
+
     assert os.path.isfile(destination_path)
     assert stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o600
 

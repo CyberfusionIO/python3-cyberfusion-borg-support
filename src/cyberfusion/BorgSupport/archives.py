@@ -17,7 +17,7 @@ from cyberfusion.BorgSupport.borg_cli import (
 )
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
-from cyberfusion.Common import generate_random_string
+from cyberfusion.Common import generate_random_string, get_md5_hash
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository
@@ -364,7 +364,7 @@ class Archive:
         destination_path: str,
         restore_paths: List[str],
         strip_components: int,
-    ) -> Tuple[Operation, str]:
+    ) -> Tuple[Operation, str, str]:
         """Export archive to tarball.
 
         The given destination path will be created with 0600 permissions.
@@ -395,7 +395,11 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
-        return Operation(progress_file=command.file), destination_path
+        return (
+            Operation(progress_file=command.file),
+            destination_path,
+            get_md5_hash(destination_path),
+        )
 
 
 class ArchiveRestoration:
