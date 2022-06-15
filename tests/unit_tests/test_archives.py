@@ -1,5 +1,6 @@
 import os
 import shutil
+import stat
 import tarfile
 from pathlib import Path
 from typing import Generator, List
@@ -124,6 +125,7 @@ def test_archive_export_tar(
 
     assert destination_path == path
     assert os.path.isfile(destination_path)
+    assert stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o600
 
     # Test tarball contents
 

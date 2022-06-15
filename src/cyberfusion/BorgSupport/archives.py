@@ -365,7 +365,10 @@ class Archive:
         restore_paths: List[str],
         strip_components: int,
     ) -> Tuple[Operation, str]:
-        """Export archive to tarball."""
+        """Export archive to tarball.
+
+        The given destination path will be created with 0600 permissions.
+        """
 
         # Construct arguments
 
@@ -375,6 +378,13 @@ class Archive:
             destination_path,
         ]
         arguments.extend(restore_paths)
+
+        # Create file with correct permissions
+
+        with open(destination_path, "w"):
+            pass
+
+        os.chmod(destination_path, 0o600)
 
         # Execute command
 
