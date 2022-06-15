@@ -32,6 +32,24 @@ def test_archive_extract_locked(
     mocker.stopall()  # Unlock for teardown
 
 
+def test_archive_create_paths_removed(
+    repository_init: Generator[Repository, None, None],
+    dummy_files: Generator[None, None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    path = os.path.join(workspace_directory, "backmeupdir1", "test1.txt")
+
+    assert os.path.isfile(path)
+
+    archive = Archive(
+        repository=repository_init, name="test", comment="Free-form comment!"
+    )
+
+    archive.create(paths=[path], excludes=[], remove_paths_if_file=True)
+
+    assert not os.path.isfile(path)
+
+
 def test_archive_extract(
     repository_init: Generator[Repository, None, None],
     archives: Generator[List[Archive], None, None],

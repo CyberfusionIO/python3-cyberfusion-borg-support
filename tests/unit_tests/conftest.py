@@ -13,7 +13,7 @@ from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.Common import generate_random_string, get_tmp_file
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def workspace_directory() -> Generator[str, None, None]:
     path = os.path.join(
         os.path.sep, "tmp", "borg-" + generate_random_string().lower()
@@ -30,7 +30,7 @@ def workspace_directory() -> Generator[str, None, None]:
     shutil.rmtree(path)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def passphrase_file(
     workspace_directory: Generator[str, None, None]
 ) -> Generator[str, None, None]:
@@ -83,7 +83,7 @@ def repository_init(
     repository.delete()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def dummy_files(
     workspace_directory: Generator[str, None, None]
 ) -> Generator[None, None, None]:

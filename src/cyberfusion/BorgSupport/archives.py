@@ -269,6 +269,7 @@ class Archive:
         paths: List[str],
         excludes: List[str],
         working_directory: str = os.path.sep,
+        remove_paths_if_file: bool = False,
     ) -> Operation:
         """Create archive.
 
@@ -312,6 +313,15 @@ class Archive:
             working_directory=working_directory,
             **self.repository._safe_cli_options,
         )
+
+        # Remove paths
+
+        if remove_paths_if_file:
+            for path in paths:
+                if not os.path.isfile(path):
+                    continue
+
+                os.unlink(path)
 
         return Operation(progress_file=command.file)
 
