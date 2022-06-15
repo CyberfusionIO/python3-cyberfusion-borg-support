@@ -12,6 +12,7 @@ from cyberfusion.BorgSupport.archives import Archive, UNIXFileTypes
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.repositories import Repository
+from cyberfusion.Common import generate_random_string
 from cyberfusion.Common.Command import CommandNonZeroError
 
 
@@ -27,7 +28,9 @@ def test_archive_extract_locked(
 
     with pytest.raises(RepositoryLockedError):
         archives[0].extract(
-            destination_path="/tmp",
+            destination_path=os.path.join(
+                workspace_directory, generate_random_string()
+            ),
             restore_paths=[],
         )
 
@@ -39,17 +42,24 @@ def test_archive_create_paths_removed(
     dummy_files: Generator[None, None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    path = os.path.join(workspace_directory, "backmeupdir1", "test1.txt")
+    path1 = os.path.join(workspace_directory, "backmeupdir1", "test1.txt")
+    path2 = os.path.join(
+        workspace_directory, "backmeupdir1"
+    )  # Tests that only files are removed
 
-    assert os.path.isfile(path)
+    assert os.path.isfile(path1)
+    assert os.path.isdir(path2)
 
     archive = Archive(
         repository=repository_init, name="test", comment="Free-form comment!"
     )
 
-    archive.create(paths=[path], excludes=[], remove_paths_if_file=True)
+    archive.create(
+        paths=[path1, path2], excludes=[], remove_paths_if_file=True
+    )
 
-    assert not os.path.isfile(path)
+    assert not os.path.isfile(path1)
+    assert os.path.isdir(path2)
 
 
 def test_archive_extract(
@@ -64,23 +74,93 @@ def test_archive_extract(
         len(os.path.sep) :
     ]
 
+    _destination_path = os.path.join(
+        workspace_directory, generate_random_string()
+    )
+
     # Extract archive
 
     operation, destination_path = archives[0].extract(
-        destination_path="/tmp",
+        destination_path=_destination_path,
         restore_paths=[dir1, dir2],
     )
 
-    assert destination_path == "/tmp"
+    # Test return values
+
+    assert isinstance(operation, Operation)
+    assert destination_path == _destination_path
 
     # Test extracted
 
-    assert open(f"/tmp/{dir1}/test1.txt", "r").read() == "Hi! 1"
-    assert os.path.isdir(f"/tmp/{dir1}/testdir")
-    assert open(f"/tmp/{dir1}/testdir/test3.txt", "r").read() == "Hi! 3"
-    assert open(f"/tmp/{dir2}/test2.txt", "r").read() == "Hi! 2"
-    assert os.readlink(f"/tmp/{dir2}/symlink.txt") == f"/{dir2}/test2.txt"
-    assert not os.path.exists(f"/tmp/{dir1}/pleaseexcludeme")
+    assert open(f"{_destination_path}/{dir1}/test1.txt", "r").read() == "Hi! 1"
+    assert os.path.isdir(f"{_destination_path}/{dir1}/testdir")
+    assert (
+        open(f"{_destination_path}/{dir1}/testdir/test3.txt", "r").read()
+        == "Hi! 3"
+    )
+    assert open(f"{_destination_path}/{dir2}/test2.txt", "r").read() == "Hi! 2"
+    assert (
+        os.readlink(f"{_destination_path}/{dir2}/symlink.txt")
+        == f"/{dir2}/test2.txt"
+    )
+    assert not os.path.exists(f"{_destination_path}/{dir1}/pleaseexcludeme")
+
+
+def test_archive_extract_directory_not_exists(
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
+    ]
+
+    _destination_path = os.path.join(
+        workspace_directory, generate_random_string()
+    )
+
+    assert not os.path.isdir(_destination_path)
+
+    operation, destination_path = archives[0].extract(
+        destination_path=_destination_path,
+        restore_paths=[dir1, dir2],
+    )
+
+    assert os.path.isdir(destination_path)
+    assert stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o700
+
+
+def test_archive_extract_directory_exists(
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
+        len(os.path.sep) :
+    ]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
+    ]
+
+    _destination_path = os.path.join(
+        workspace_directory, generate_random_string()
+    )
+
+    os.mkdir(_destination_path)
+    os.chmod(_destination_path, 0o755)
+
+    operation, destination_path = archives[0].extract(
+        destination_path=_destination_path,
+        restore_paths=[dir1, dir2],
+    )
+
+    assert os.path.isdir(destination_path)
+    assert (
+        stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o755
+    )  # Unchanged
 
 
 def test_archive_export_tar_locked(

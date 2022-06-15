@@ -333,7 +333,11 @@ class Archive:
         restore_paths: List[str],
         strip_components: Optional[int] = None,
     ) -> Tuple[Operation, str]:
-        """Extract paths in archive to destination."""
+        """Extract paths in archive to destination.
+
+        The given destination path will be created with 0700 permissions if it
+        does not exist.
+        """
 
         # Construct arguments
 
@@ -344,6 +348,12 @@ class Archive:
 
         arguments.append(self.name)
         arguments.extend(restore_paths)
+
+        # Create directory with correct permissions
+
+        if not os.path.isdir(destination_path):
+            os.mkdir(destination_path)
+            os.chmod(destination_path, 0o700)
 
         # Execute command
 
