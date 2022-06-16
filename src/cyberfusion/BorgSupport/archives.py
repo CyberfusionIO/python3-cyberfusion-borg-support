@@ -17,7 +17,7 @@ from cyberfusion.BorgSupport.borg_cli import (
 )
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
-from cyberfusion.Common import generate_random_string
+from cyberfusion.Common import generate_random_string, get_md5_hash
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository
@@ -205,11 +205,18 @@ class Archive:
         return self._comment
 
     @archive_check_repository_not_locked
-    def contents(self, *, path: Optional[str]) -> List[FilesystemObject]:
+    def contents(
+        self, *, path: Optional[str], recursive: bool = True
+    ) -> List[FilesystemObject]:
         """Get contents of archive.
 
         If 'path' is None, no path will be passed to Borg. As far as we are aware,
         this is equal to starting at the root, i.e. specifying '/' as path.
+
+        If 'recursive' is True, all contents from the given path, including
+        those in subdirectories, are returned. This is the default behaviour
+        by Borg. If 'recursive' is False, only the contents in the given path
+        and the filesystem object of the path itself are returned.
 
         Contents are filesystem objects, i.e. directories and files.
         """
@@ -232,10 +239,24 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
-        for (
-            _line
-        ) in command.stdout.splitlines():  # Each line is a JSON document
+        for _line in command.stdout.splitlines():
             line = json.loads(_line)
+
+            # If not recursive, skip if the path of this filesystem object is
+            # not the given path or directly inside the given path. Borg does
+            # not support doing this natively, see the dead end at https://mail.python.org/pipermail/borgbackup/2017q4/000928.html
+
+            if path and not recursive:
+                is_path = line["path"] == path
+
+                path_is_parent = Path(
+                    os.path.join(
+                        os.path.sep, line["path"]
+                    )  # Convert from relative to absolute for check
+                ).parent == PosixPath(os.path.join(os.path.sep, path))
+
+                if not path_is_parent and not is_path:
+                    continue
 
             results.append(FilesystemObject(line))
 
@@ -248,6 +269,7 @@ class Archive:
         paths: List[str],
         excludes: List[str],
         working_directory: str = os.path.sep,
+        remove_paths_if_file: bool = False,
     ) -> Operation:
         """Create archive.
 
@@ -292,6 +314,15 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
+        # Remove paths
+
+        if remove_paths_if_file:
+            for path in paths:
+                if not os.path.isfile(path):
+                    continue
+
+                os.unlink(path)
+
         return Operation(progress_file=command.file)
 
     @archive_check_repository_not_locked
@@ -302,7 +333,11 @@ class Archive:
         restore_paths: List[str],
         strip_components: Optional[int] = None,
     ) -> Tuple[Operation, str]:
-        """Extract paths in archive to destination."""
+        """Extract paths in archive to destination.
+
+        The given destination path will be created with 0700 permissions if it
+        does not exist.
+        """
 
         # Construct arguments
 
@@ -313,6 +348,12 @@ class Archive:
 
         arguments.append(self.name)
         arguments.extend(restore_paths)
+
+        # Create directory with correct permissions
+
+        if not os.path.isdir(destination_path):
+            os.mkdir(destination_path)
+            os.chmod(destination_path, 0o700)
 
         # Execute command
 
@@ -333,8 +374,11 @@ class Archive:
         destination_path: str,
         restore_paths: List[str],
         strip_components: int,
-    ) -> Tuple[Operation, str]:
-        """Export archive to tarball."""
+    ) -> Tuple[Operation, str, str]:
+        """Export archive to tarball.
+
+        The given destination path will be created with 0600 permissions.
+        """
 
         # Construct arguments
 
@@ -345,6 +389,13 @@ class Archive:
         ]
         arguments.extend(restore_paths)
 
+        # Create file with correct permissions
+
+        with open(destination_path, "w"):
+            pass
+
+        os.chmod(destination_path, 0o600)
+
         # Execute command
 
         command = BorgLoggedCommand()
@@ -354,7 +405,11 @@ class Archive:
             **self.repository._safe_cli_options,
         )
 
-        return Operation(progress_file=command.file), destination_path
+        return (
+            Operation(progress_file=command.file),
+            destination_path,
+            get_md5_hash(destination_path),
+        )
 
 
 class ArchiveRestoration:
