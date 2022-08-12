@@ -58,6 +58,11 @@ class Repository:
         """Set variables.
 
         Set 'identity_file_path' only when the repository is remote.
+
+        The specified identity file may not be protected by a passphrase. If the
+        private SSH key leaks, the attacker does NOT have access to the repository,
+        as they also need the passphrase. The remote SSH server should use `borg
+        serve` so that an attacker would not have regular shell access either.
         """
         self._path = path
         self._passphrase_file = passphrase_file
