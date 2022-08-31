@@ -1,34 +1,28 @@
-image: debian:bullseye
+include:
+  - project: 'cyberfusion/gitlab-ci-includes'
+    ref: main
+    file:
+      - '/base.yml'
+      - '/debian-packages.yml'
+      - '/python.yml'
+
+variables:
+  APTLY_BASE_REPOSITORY: common
 
 stages:
   - test
   - build
-
-styling test:
-  stage: test
-  image: python:3.9
-  script:
-    - pip install --no-cache-dir -r requirements/dev.txt
-    - mypy . --junit-xml report-mypy.xml
-    - flake8 . --tee --output-file flake8.txt; exit_code=$?; flake8_junit flake8.txt report-flake8.xml
-    - if [ $exit_code -ne 0 ]; then exit 1; fi;
-    - isort -c .
-    - black --check .
-  artifacts:
-    reports:
-      junit: report-*.xml
+  - publish
 
 unit test:
   stage: test
   image: python:3.9
   script:
-    - echo 'deb https://deb.cyberfusion.nl/ stable main' > /etc/apt/sources.list.d/cyberfusion-packages.list
-    - apt-key adv --fetch-keys https://deb.cyberfusion.nl/cfpkg.gpg
-    - apt update
-    - apt -y install python-cyberfusion-common python3-cached-property
+    - !reference [.add repositories, script]
+    - apt-get -y install python-cyberfusion-common python3-cached-property
     - echo 'deb http://debmirror.tuxis.nl/debian bullseye-backports main' > /etc/apt/sources.list.d/backports.list
-    - apt update
-    - apt install -y borgbackup -t bullseye-backports
+    - apt-get update
+    - apt-get -y install borgbackup -t bullseye-backports
     - pip install --no-cache-dir -r requirements/test.txt
     - cp $CI_PROJECT_DIR/progress_file_with_known_types.txt /tmp/progress_file_with_known_types.txt
     - cp $CI_PROJECT_DIR/progress_file_with_unknown_types.txt /tmp/progress_file_with_unknown_types.txt
@@ -37,35 +31,3 @@ unit test:
   artifacts:
     reports:
       junit: report-*.xml
-
-build test:
-  stage: test
-  script:
-    - apt update
-    - apt --no-install-recommends -y install apt-transport-https ca-certificates build-essential devscripts equivs gnupg lintian
-    - echo 'deb https://deb.cyberfusion.nl/ stable main' > /etc/apt/sources.list.d/cyberfusion-packages.list
-    - apt-key adv --fetch-keys https://deb.cyberfusion.nl/cfpkg.gpg
-    - apt update
-    - mk-build-deps -i -t 'apt -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
-    - dpkg-buildpackage -us -uc
-    - dpkg-genchanges > ../pkg.changes
-    - lintian ../pkg.changes
-
-build:
-  stage: build
-  only:
-    - main
-  script:
-    - apt update
-    - apt --no-install-recommends -y install apt-transport-https ca-certificates build-essential devscripts equivs gnupg
-    - echo 'deb https://deb.cyberfusion.nl/ stable main' > /etc/apt/sources.list.d/cyberfusion-packages.list
-    - apt-key adv --fetch-keys https://deb.cyberfusion.nl/cfpkg.gpg
-    - apt update
-    - mk-build-deps -i -t 'apt -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
-    - dpkg-buildpackage -us -uc
-    - mkdir publish
-    - cp ../*.deb publish/
-  artifacts:
-    paths:
-      - publish/*.deb
-    expire_in: 1 week
