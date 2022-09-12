@@ -1,4 +1,4 @@
-"""Classes for interacting with Borg."""
+"""Classes for interacting with Borg operations."""
 
 import json
 from enum import Enum

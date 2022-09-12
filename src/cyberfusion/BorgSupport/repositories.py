@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
 
+from cyberfusion.BorgSupport import Borg
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
 from cyberfusion.BorgSupport.exceptions import (
@@ -35,6 +36,20 @@ def check_repository_not_locked(f: F) -> Any:
             raise RepositoryLockedError
 
         return f(self, *args, **kwargs)
+
+    return wrapper
+
+
+def compact_repository(f: F) -> Any:
+    """Run repository compact."""
+
+    def wrapper(self: Any, *args: tuple, **kwargs: dict) -> Any:
+        result = f(self, *args, **kwargs)
+
+        if Borg().version >= (1, 2, 0):
+            self.compact()
+
+        return result
 
     return wrapper
 
@@ -301,6 +316,7 @@ class Repository:
         return True
 
     @check_repository_not_locked
+    @compact_repository
     def prune(
         self,
         *,
@@ -337,6 +353,25 @@ class Repository:
 
         BorgRegularCommand().execute(
             command=BorgCommand.SUBCOMMAND_PRUNE,
+            arguments=arguments,
+            **self._safe_cli_options,
+        )
+
+    @check_repository_not_locked
+    def compact(self) -> None:
+        """Compact repository.
+
+        Run after deleting archives. See: https://borgbackup.readthedocs.io/en/stable/usage/notes.html#separate-compaction
+        """
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
+        BorgRegularCommand().execute(
+            command=BorgCommand.SUBCOMMAND_COMPACT,
             arguments=arguments,
             **self._safe_cli_options,
         )
