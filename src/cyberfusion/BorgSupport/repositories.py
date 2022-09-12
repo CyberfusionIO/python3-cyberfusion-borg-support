@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
 
+from cyberfusion.BorgSupport import Borg
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
 from cyberfusion.BorgSupport.exceptions import (
@@ -39,6 +40,20 @@ def check_repository_not_locked(f: F) -> Any:
     return wrapper
 
 
+def compact_repository(f: F) -> Any:
+    """Run repository compact."""
+
+    def wrapper(self: Any, *args: tuple, **kwargs: dict) -> Any:
+        result = f(self, *args, **kwargs)
+
+        if Borg().version >= (1, 2, 0):
+            self.compact()
+
+        return result
+
+    return wrapper
+
+
 class BorgRepositoryEncryptionName(Enum):
     """Repository encryption names."""
 
@@ -58,6 +73,11 @@ class Repository:
         """Set variables.
 
         Set 'identity_file_path' only when the repository is remote.
+
+        The specified identity file may not be protected by a passphrase. If the
+        private SSH key leaks, the attacker does NOT have access to the repository,
+        as they also need the passphrase. The remote SSH server should use `borg
+        serve` so that an attacker would not have regular shell access either.
         """
         self._path = path
         self._passphrase_file = passphrase_file
@@ -296,6 +316,7 @@ class Repository:
         return True
 
     @check_repository_not_locked
+    @compact_repository
     def prune(
         self,
         *,
@@ -332,6 +353,25 @@ class Repository:
 
         BorgRegularCommand().execute(
             command=BorgCommand.SUBCOMMAND_PRUNE,
+            arguments=arguments,
+            **self._safe_cli_options,
+        )
+
+    @check_repository_not_locked
+    def compact(self) -> None:
+        """Compact repository.
+
+        Run after deleting archives. See: https://borgbackup.readthedocs.io/en/stable/usage/notes.html#separate-compaction
+        """
+
+        # Construct arguments
+
+        arguments = [self.path]
+
+        # Execute command
+
+        BorgRegularCommand().execute(
+            command=BorgCommand.SUBCOMMAND_COMPACT,
             arguments=arguments,
             **self._safe_cli_options,
         )
