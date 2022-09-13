@@ -347,6 +347,7 @@ def test_repository_prune_locked(
 def test_repository_prune(
     repository_init: Generator[Repository, None, None]
 ) -> None:
+    repository_init.prune(keep_last=1)
     repository_init.prune(keep_hourly=1)
     repository_init.prune(keep_daily=1)
     repository_init.prune(keep_weekly=1)
