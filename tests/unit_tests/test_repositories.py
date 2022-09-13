@@ -345,12 +345,90 @@ def test_repository_prune_locked(
 
 
 def test_repository_prune(
+    repository_init: Generator[Repository, None, None],
+    dummy_files: Generator[None, None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    Archive(
+        repository=repository_init,
+        name="prunetest1",
+        comment="Free-form comment!",
+    ).create(
+        paths=[
+            os.path.join(workspace_directory, "backmeupdir1")
+        ],  # Created by dummy_files fixture
+        excludes=[],
+    )
+
+    Archive(
+        repository=repository_init,
+        name="prunetest2",
+        comment="Free-form comment!",
+    ).create(
+        paths=[
+            os.path.join(workspace_directory, "backmeupdir1")
+        ],  # Created by dummy_files fixture
+        excludes=[],
+    )
+
+    Archive(
+        repository=repository_init,
+        name="prunetest3",
+        comment="Free-form comment!",
+    ).create(
+        paths=[
+            os.path.join(workspace_directory, "backmeupdir1")
+        ],  # Created by dummy_files fixture
+        excludes=[],
+    )
+
+    assert all(
+        a._name in ["prunetest1", "prunetest2", "prunetest3"]
+        for a in repository_init.archives
+    )
+
+    assert repository_init.prune(keep_last=1) == ["prunetest1", "prunetest2"]
+
+    assert all(
+        a._name not in ["prunetest1", "prunetest2"]
+        for a in repository_init.archives
+    )
+    assert all(a._name in ["prunetest3"] for a in repository_init.archives)
+
+
+def test_repository_prune_keep_last(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    repository_init.prune(keep_last=1)
+
+
+def test_repository_prune_keep_hourly(
     repository_init: Generator[Repository, None, None]
 ) -> None:
     repository_init.prune(keep_hourly=1)
+
+
+def test_repository_prune_keep_daily(
+    repository_init: Generator[Repository, None, None]
+) -> None:
     repository_init.prune(keep_daily=1)
+
+
+def test_repository_prune_keep_weekly(
+    repository_init: Generator[Repository, None, None]
+) -> None:
     repository_init.prune(keep_weekly=1)
+
+
+def test_repository_prune_keep_monthly(
+    repository_init: Generator[Repository, None, None]
+) -> None:
     repository_init.prune(keep_monthly=1)
+
+
+def test_repository_prune_keep_yearly(
+    repository_init: Generator[Repository, None, None]
+) -> None:
     repository_init.prune(keep_yearly=1)
 
 

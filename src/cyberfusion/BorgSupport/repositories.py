@@ -320,17 +320,26 @@ class Repository:
     def prune(
         self,
         *,
+        keep_last: Optional[int] = None,
         keep_hourly: Optional[int] = None,
         keep_daily: Optional[int] = None,
         keep_weekly: Optional[int] = None,
         keep_monthly: Optional[int] = None,
         keep_yearly: Optional[int] = None,
-    ) -> None:
+    ) -> List[str]:
         """Prune repository archives."""
+        pruned_archives_names = []
+
+        # Get archives before prune
+
+        before_archives_names = [a._name for a in self.archives]
 
         # Construct arguments
 
         arguments = []
+
+        if keep_last:
+            arguments.append(f"--keep-last={keep_last}")
 
         if keep_hourly:
             arguments.append(f"--keep-hourly={keep_hourly}")
@@ -356,6 +365,22 @@ class Repository:
             arguments=arguments,
             **self._safe_cli_options,
         )
+
+        # Get archives after prune
+
+        after_archives_names = [a._name for a in self.archives]
+
+        # Get removed archives (in before list, not in after list)
+        #
+        # Not possible to get neatly, see: https://github.com/borgbackup/borg/discussions/7021
+
+        for archive_name in before_archives_names:
+            if archive_name in after_archives_names:
+                continue
+
+            pruned_archives_names.append(archive_name)
+
+        return pruned_archives_names
 
     @check_repository_not_locked
     def compact(self) -> None:
