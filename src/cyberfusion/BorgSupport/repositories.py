@@ -320,6 +320,7 @@ class Repository:
     def prune(
         self,
         *,
+        keep_last: Optional[int] = None,
         keep_hourly: Optional[int] = None,
         keep_daily: Optional[int] = None,
         keep_weekly: Optional[int] = None,
@@ -331,6 +332,9 @@ class Repository:
         # Construct arguments
 
         arguments = []
+
+        if keep_last:
+            arguments.append(f"--keep-last={keep_last}")
 
         if keep_hourly:
             arguments.append(f"--keep-hourly={keep_hourly}")
