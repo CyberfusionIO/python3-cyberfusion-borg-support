@@ -1,3 +1,10 @@
+python-cyberfusion-borg-support (1.3.7) unstable; urgency=low
+
+  - Add keep_last to Repository.prune
+  - Return pruned archives on Repository.prune
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Tue, 13 Sep 2022 13:43:00 +0200
+
 python-cyberfusion-borg-support (1.3.6) unstable; urgency=low
 
   - Compact repositories from Borg 1.2.0
