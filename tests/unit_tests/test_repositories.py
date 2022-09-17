@@ -322,7 +322,7 @@ def test_repository_check_has_no_integrity(
         return mock.DEFAULT
 
     with mock.patch(
-        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        "cyberfusion.BorgSupport.borg_cli.BorgLoggedCommand.execute",
         side_effect=execute_side_effect,
     ):
         result = repository_init.check()

@@ -8,7 +8,11 @@ from urllib.parse import urlparse
 
 from cyberfusion.BorgSupport import Borg
 from cyberfusion.BorgSupport.archives import Archive
-from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
+from cyberfusion.BorgSupport.borg_cli import (
+    BorgCommand,
+    BorgLoggedCommand,
+    BorgRegularCommand,
+)
 from cyberfusion.BorgSupport.exceptions import (
     RepositoryLockedError,
     RepositoryNotLocalError,
@@ -305,7 +309,7 @@ class Repository:
         # Execute command
 
         try:
-            BorgRegularCommand().execute(
+            BorgLoggedCommand().execute(
                 command=BorgCommand.SUBCOMMAND_CHECK,
                 arguments=arguments,
                 **self._safe_cli_options,
