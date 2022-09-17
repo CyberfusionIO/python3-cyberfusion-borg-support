@@ -512,7 +512,7 @@ class ArchiveRestoration:
         Path in archive is relative, so is path without leading slash. See docstring
         for more information.
         """
-        return self._path[len(os.path.sep) :]
+        return os.path.relpath(self._path, os.path.sep)
 
     def _create_temporary_path(self, *, root_path: str) -> str:
         """Generate and create temporary path."""
