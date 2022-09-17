@@ -1,3 +1,10 @@
+python-cyberfusion-borg-support (1.3.7.2) unstable; urgency=low
+
+  - ArchiveRestoration: Get path relative to /, instead of removing
+    first /
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Sat, 17 Sep 2022 18:48:00 +0200
+
 python-cyberfusion-borg-support (1.3.7.1) unstable; urgency=low
 
   - Use BorgLoggedCommand for Repository.check
