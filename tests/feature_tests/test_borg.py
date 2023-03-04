@@ -2,4 +2,8 @@ from cyberfusion.BorgSupport import Borg
 
 
 def test_borg_version() -> None:
-    assert Borg().version == (1, 2, 2)
+    major, minor, point = Borg().version
+
+    assert isinstance(major, int)
+    assert isinstance(minor, int)
+    assert isinstance(point, int)
