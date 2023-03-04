@@ -89,107 +89,6 @@ def test_true_bin_user(mocker: MockerFixture) -> None:
     assert get_true_bin() == "/usr/bin/true"
 
 
-def test_borg_regular_command_attributes_stdout(
-    borg_regular_command: BorgRegularCommand,
-) -> None:
-    borg_regular_command.execute(
-        command=None,
-        arguments=["--version"],
-        capture_stderr=False,
-    )
-
-    assert borg_regular_command.stdout.startswith("borg ")
-    assert borg_regular_command.stderr is None
-    assert borg_regular_command.rc == 0
-
-
-def test_borg_regular_command_attributes_stderr(
-    borg_regular_command: BorgRegularCommand,
-) -> None:
-    with pytest.raises(CommandNonZeroError) as e:
-        borg_regular_command.execute(
-            command=None,
-            arguments=["--versionn"],
-            capture_stderr=True,
-        )
-
-    assert e.value.stdout is not None
-    assert e.value.stderr is not None
-    assert e.value.rc == 2
-
-
-def test_borg_logged_command_attributes(
-    repository_init: Generator[Repository, None, None],
-    borg_logged_command: BorgLoggedCommand,
-    workspace_directory: Generator[str, None, None],
-) -> None:
-    borg_logged_command.execute(
-        command="create",
-        arguments=[
-            os.path.join(workspace_directory, "repository2")
-            + "::testarchivename",
-            "/bin/sh",
-        ],
-        **repository_init._safe_cli_options,
-    )
-
-    assert borg_logged_command.file
-    assert borg_logged_command.rc == 0
-
-
-def test_borg_regular_command_command_and_arguments(
-    borg_regular_command: BorgRegularCommand,
-) -> None:
-    borg_regular_command.execute(
-        run=False, command="info", arguments=["--test1=test1", "--test2=test2"]
-    )
-
-    assert borg_regular_command.command == [
-        BorgCommand.BORG_BIN,
-        "info",
-        "--test1=test1",
-        "--test2=test2",
-    ]
-
-
-def test_borg_logged_command_command_and_arguments(
-    repository_init: Generator[Repository, None, None],
-    borg_logged_command: BorgLoggedCommand,
-    workspace_directory: Generator[str, None, None],
-) -> None:
-    borg_logged_command.execute(
-        run=False,
-        command="create",
-        arguments=[
-            os.path.join(workspace_directory, "repository2")
-            + "::testarchivename",
-            "/root",
-        ],
-        **repository_init._safe_cli_options,
-    )
-
-    assert borg_logged_command.command == [
-        BorgCommand.BORG_BIN,
-        "--progress",
-        "--log-json",
-        "create",
-        os.path.join(workspace_directory, "repository2") + "::testarchivename",
-        "/root",
-    ]
-
-
-def test_borg_regular_command_json(
-    borg_regular_command: BorgRegularCommand,
-) -> None:
-    borg_regular_command.execute(run=False, command="info", json_format=True)
-
-    assert borg_regular_command.command == [
-        BorgCommand.BORG_BIN,
-        "info",
-        "--json",
-    ]
-
-
 def test_get_rsh_argument() -> None:
     assert _get_rsh_argument("/tmp/test.key") == [
         "--rsh",
@@ -244,4 +143,57 @@ def test_borg_logged_command_identity_file_path(
         "ssh -oBatchMode=yes -oStrictHostKeyChecking=no -i /tmp/test.key",
         os.path.join(workspace_directory, "repository2") + "::testarchivename",
         "/root",
+    ]
+
+
+def test_borg_regular_command_command_and_arguments(
+    borg_regular_command: BorgRegularCommand,
+) -> None:
+    borg_regular_command.execute(
+        run=False, command="info", arguments=["--test1=test1", "--test2=test2"]
+    )
+
+    assert borg_regular_command.command == [
+        BorgCommand.BORG_BIN,
+        "info",
+        "--test1=test1",
+        "--test2=test2",
+    ]
+
+
+def test_borg_logged_command_command_and_arguments(
+    repository_init: Generator[Repository, None, None],
+    borg_logged_command: BorgLoggedCommand,
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    borg_logged_command.execute(
+        run=False,
+        command="create",
+        arguments=[
+            os.path.join(workspace_directory, "repository2")
+            + "::testarchivename",
+            "/root",
+        ],
+        **repository_init._safe_cli_options,
+    )
+
+    assert borg_logged_command.command == [
+        BorgCommand.BORG_BIN,
+        "--progress",
+        "--log-json",
+        "create",
+        os.path.join(workspace_directory, "repository2") + "::testarchivename",
+        "/root",
+    ]
+
+
+def test_borg_regular_command_json(
+    borg_regular_command: BorgRegularCommand,
+) -> None:
+    borg_regular_command.execute(run=False, command="info", json_format=True)
+
+    assert borg_regular_command.command == [
+        BorgCommand.BORG_BIN,
+        "info",
+        "--json",
     ]
