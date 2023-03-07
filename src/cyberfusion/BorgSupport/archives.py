@@ -49,7 +49,7 @@ def archive_restoration_check_repository_not_locked(f: F) -> Any:
     return wrapper
 
 
-class UNIXFileTypes(Enum):
+class UNIXFileType(Enum):
     """UNIX file types.
 
     These are not complete (e.g. some specific file types for Cray DMF, Solaris,
@@ -90,16 +90,16 @@ class FilesystemObject:
         self._line = line
 
     @property
-    def type_(self) -> UNIXFileTypes:
+    def type_(self) -> UNIXFileType:
         """Get object type.
 
         Should only be one of the following in practice:
 
-        * UNIXFileTypes.REGULAR_FILE
-        * UNIXFileTypes.DIRECTORY
-        * UNIXFileTypes.SYMBOLIC_LINK
+        * UNIXFileType.REGULAR_FILE
+        * UNIXFileType.DIRECTORY
+        * UNIXFileType.SYMBOLIC_LINK
         """
-        return UNIXFileTypes(self._line["type"])
+        return UNIXFileType(self._line["type"])
 
     @property
     def symbolic_mode(self) -> str:
@@ -131,7 +131,7 @@ class FilesystemObject:
 
         If the object type is not a symlink, None is returned.
         """
-        if self.type_ != UNIXFileTypes.SYMBOLIC_LINK:
+        if self.type_ != UNIXFileType.SYMBOLIC_LINK:
             return None
 
         # For symlinks, 'source' and 'linktarget' both refer to the target. However,
@@ -166,7 +166,7 @@ class FilesystemObject:
         Note that the size of the original object, and the size of the object in
         the archive may differ.
         """
-        if self.type_ != UNIXFileTypes.REGULAR_FILE:
+        if self.type_ != UNIXFileType.REGULAR_FILE:
             return None
 
         return self._line["size"]
@@ -460,13 +460,13 @@ class ArchiveRestoration:
 
     def _check_type(self) -> None:
         """Raise exception if type of filesystem object is not supported."""
-        if self.type_ in [UNIXFileTypes.DIRECTORY, UNIXFileTypes.REGULAR_FILE]:
+        if self.type_ in [UNIXFileType.DIRECTORY, UNIXFileType.REGULAR_FILE]:
             return
 
         raise NotImplementedError
 
     @property
-    def type_(self) -> UNIXFileTypes:
+    def type_(self) -> UNIXFileType:
         """Set type of filesystem object at path."""
         return next(  # Raises StopIteration if no results
             filter(
@@ -623,7 +623,7 @@ class ArchiveRestoration:
         # existed before doing the restore, see above).
 
         if os.path.lexists(self.old_path):
-            if self.type_ == UNIXFileTypes.DIRECTORY:
+            if self.type_ == UNIXFileType.DIRECTORY:
                 shutil.rmtree(self.old_path)
 
                 return

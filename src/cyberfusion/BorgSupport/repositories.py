@@ -18,7 +18,7 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
-from cyberfusion.BorgSupport.operations import JSONLineType, MessageIDs
+from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
 from cyberfusion.Common.Command import CommandNonZeroError, CyberfusionCommand
 from cyberfusion.Common.Filesystem import get_directory_size
 
@@ -238,7 +238,7 @@ class Repository:
                 if line["type"] != JSONLineType.LOG_MESSAGE.value:
                     continue
 
-                if line["msgid"] != MessageIDs.LOCK_TIMEOUT.value:
+                if line["msgid"] != MessageID.LOCK_TIMEOUT.value:
                     continue
 
                 return True
