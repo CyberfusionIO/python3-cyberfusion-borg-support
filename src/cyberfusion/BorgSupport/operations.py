@@ -17,7 +17,7 @@ class JSONLineType(Enum):
     LOG_MESSAGE = "log_message"
 
 
-class MessageIDs(Enum):
+class MessageID(Enum):
     """Message IDs.
 
     From https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#message-ids

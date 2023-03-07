@@ -8,7 +8,7 @@ from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 from cyberfusion.BorgSupport.archives import (
     Archive,
     ArchiveRestoration,
-    UNIXFileTypes,
+    UNIXFileType,
 )
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.repositories import Repository
@@ -93,7 +93,7 @@ def test_archive_restoration_directory_attributes(
     assert archive_restoration.temporary_path.startswith(
         f"{workspace_directory}/.archive-restore-tmp.backmeupdir2-"
     )
-    assert archive_restoration.type_ == UNIXFileTypes.DIRECTORY
+    assert archive_restoration.type_ == UNIXFileType.DIRECTORY
     assert archive_restoration.filesystem_path == dir2_with_leading_slash
     assert archive_restoration.archive_path == dir2_without_leading_slash
     assert archive_restoration.strip_components == 2
@@ -132,7 +132,7 @@ def test_archive_restoration_regular_file_attributes(
     assert archive_restoration.temporary_path.startswith(
         f"{workspace_directory}/.archive-restore-tmp.test2.txt-"
     )
-    assert archive_restoration.type_ == UNIXFileTypes.REGULAR_FILE
+    assert archive_restoration.type_ == UNIXFileType.REGULAR_FILE
     assert archive_restoration.filesystem_path == file_with_leading_slash
     assert archive_restoration.archive_path == file_without_leading_slash
     assert archive_restoration.strip_components == 3

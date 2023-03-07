@@ -8,7 +8,7 @@ from typing import Generator, List
 import pytest
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
-from cyberfusion.BorgSupport.archives import Archive, UNIXFileTypes
+from cyberfusion.BorgSupport.archives import Archive, UNIXFileType
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.repositories import Repository
@@ -282,7 +282,7 @@ def test_archive_contents_without_path(
     assert len(contents) == 7
 
     assert any(
-        content.type_ == UNIXFileTypes.DIRECTORY
+        content.type_ == UNIXFileType.DIRECTORY
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -293,7 +293,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.REGULAR_FILE
+        content.type_ == UNIXFileType.REGULAR_FILE
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -304,7 +304,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.DIRECTORY
+        content.type_ == UNIXFileType.DIRECTORY
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -315,7 +315,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.REGULAR_FILE
+        content.type_ == UNIXFileType.REGULAR_FILE
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -326,7 +326,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.DIRECTORY
+        content.type_ == UNIXFileType.DIRECTORY
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -337,7 +337,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.REGULAR_FILE
+        content.type_ == UNIXFileType.REGULAR_FILE
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -348,7 +348,7 @@ def test_archive_contents_without_path(
         for content in contents
     )
     assert any(
-        content.type_ == UNIXFileTypes.SYMBOLIC_LINK
+        content.type_ == UNIXFileType.SYMBOLIC_LINK
         and content.symbolic_mode is not None
         and content.user is not None
         and content.group is not None
@@ -374,16 +374,16 @@ def test_archive_contents_with_path(
 
     assert len(contents) == 4
 
-    assert contents[0].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[0].type_ == UNIXFileType.DIRECTORY
     assert contents[0].path == dir1
 
-    assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[1].type_ == UNIXFileType.REGULAR_FILE
     assert contents[1].path == f"{dir1}/test1.txt"
 
-    assert contents[2].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[2].type_ == UNIXFileType.DIRECTORY
     assert contents[2].path == f"{dir1}/testdir"
 
-    assert contents[3].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[3].type_ == UNIXFileType.REGULAR_FILE
     assert contents[3].path == f"{dir1}/testdir/test3.txt"
 
     # Test archive contents from file
@@ -392,7 +392,7 @@ def test_archive_contents_with_path(
 
     assert len(contents) == 1
 
-    assert contents[0].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[0].type_ == UNIXFileType.REGULAR_FILE
     assert contents[0].path == f"{dir1}/test1.txt"
 
 
@@ -410,13 +410,13 @@ def test_archive_contents_not_recursive(
 
     # Path itself is included (path_is_parent)
 
-    assert contents[0].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[0].type_ == UNIXFileType.DIRECTORY
     assert contents[0].path == dir1
 
     # 'testdir/test3.txt' is not included, so recursive=False works
 
-    assert contents[1].type_ == UNIXFileTypes.REGULAR_FILE
+    assert contents[1].type_ == UNIXFileType.REGULAR_FILE
     assert contents[1].path == f"{dir1}/test1.txt"
 
-    assert contents[2].type_ == UNIXFileTypes.DIRECTORY
+    assert contents[2].type_ == UNIXFileType.DIRECTORY
     assert contents[2].path == f"{dir1}/testdir"
