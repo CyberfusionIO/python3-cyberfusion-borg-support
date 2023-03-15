@@ -206,13 +206,34 @@ class Repository:
     def exists(self) -> bool:
         """Determine if repository exists.
 
-        Borg does not provide a more neat way of checking this than below. It
-        does not matter if the repository actually has archives. Inspired by
+        Borg does not provide a neat way of checking whether a repository exists.
+        Therefore, we try getting archives. Inspired by:
         https://github.com/borgbackup/borg/issues/271#issuecomment-378091437
         """
+        MESSAGE_FAILED_ACQUIRE_LOCK = "Failed to create/acquire the lock"
         try:
-            self.archives
-        except CommandNonZeroError:
+            BorgRegularCommand().execute(
+                command=BorgCommand.SUBCOMMAND_LIST,
+                arguments=[self.path],
+                capture_stderr=True,
+                **self._safe_cli_options,
+            )
+        except CommandNonZeroError as e:
+            # Repository exists, but error occurred
+
+            if e.stderr not in [
+                f"Repository {self.path} does not exist.\n",
+                f"{self.path} is not a valid repository. Check repo config.\n",
+            ] and not e.stderr.startswith(MESSAGE_FAILED_ACQUIRE_LOCK):
+                raise
+
+            # Repository exists, but is locked
+
+            if e.stderr.startswith(MESSAGE_FAILED_ACQUIRE_LOCK):
+                return True
+
+            # Repository does not exist
+
             return False
 
         return True

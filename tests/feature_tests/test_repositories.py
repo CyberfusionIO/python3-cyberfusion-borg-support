@@ -1,5 +1,4 @@
 import os
-import shutil
 from typing import Dict, Generator, List, Optional
 from unittest import mock
 
@@ -43,7 +42,15 @@ def test_repository_archives(
     assert archives[0].comment == "Free-form comment!"
 
 
-def test_repository_not_exists(
+def test_repository_not_exists_directory_exists(
+    repository: Generator[Repository, None, None]
+) -> None:
+    os.mkdir(repository.path)
+
+    assert not repository.exists
+
+
+def test_repository_not_exists_directory_not_exists(
     repository: Generator[Repository, None, None]
 ) -> None:
     assert not repository.exists
@@ -53,6 +60,81 @@ def test_repository_exists(
     repository_init: Generator[Repository, None, None]
 ) -> None:
     assert repository_init.exists
+
+
+def test_repository_exists_failure(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that original exception is raised when self.exists can't get archives list due to error."""
+
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "list":
+            raise CommandNonZeroError(
+                command=[
+                    BorgCommand.BORG_BIN,
+                    "list",
+                    repository_init.path,
+                ],
+                stdout=None,
+                stderr="Something went wrong",
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        side_effect=execute_side_effect,
+    ):
+        with pytest.raises(CommandNonZeroError):
+            repository_init.exists
+
+
+def test_repository_exists_locked(
+    repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that no exception is raised when self.exists can't get archives due to lock."""
+
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "list":
+            raise CommandNonZeroError(
+                command=[
+                    BorgCommand.BORG_BIN,
+                    "list",
+                    repository_init.path,
+                ],
+                stdout=None,
+                stderr="Failed to create/acquire the lock /Users/williamedwards/borg/test/lock.exclusive (timeout).",
+                rc=2,
+            )
+
+        return mock.DEFAULT
+
+    with mock.patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
+        side_effect=execute_side_effect,
+    ):
+        assert repository_init.exists
 
 
 def test_repository_size(
