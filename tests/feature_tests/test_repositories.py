@@ -67,6 +67,80 @@ def test_repository_not_locked(
     assert not repository_init.is_locked
 
 
+def test_repository_not_exists_create_if_not_exists(
+    mocker: MockerFixture,
+    passphrase_file: Generator[str, None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    """Test that if repository does not exist and 'create_if_not_exists' is true, repository is created."""
+    path = os.path.join(workspace_directory, "repository3")
+
+    spy_create = mocker.spy(Repository, "create")
+
+    repository = Repository(
+        path=path,
+        passphrase_file=passphrase_file,
+        create_if_not_exists=True,
+    )
+
+    spy_create.assert_called_once()
+    assert repository.exists
+
+
+def test_repository_not_exists_not_create_if_not_exists(
+    mocker: MockerFixture,
+    passphrase_file: Generator[str, None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    """Test that if repository does not exist and 'create_if_not_exists' is false, repository is not created."""
+    path = os.path.join(workspace_directory, "repository3")
+
+    spy_create = mocker.spy(Repository, "create")
+
+    repository = Repository(
+        path=path,
+        passphrase_file=passphrase_file,
+        create_if_not_exists=False,
+    )
+
+    assert not spy_create.called
+    assert not repository.exists
+
+
+def test_repository_exists_not_create_if_not_exists(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that if repository exists and 'create_if_not_exists' is false, repository is not created."""
+    spy_create = mocker.spy(Repository, "create")
+
+    repository = Repository(
+        path=repository_init._path,
+        passphrase_file=repository_init._passphrase_file,
+        identity_file_path=repository_init.identity_file_path,
+        create_if_not_exists=False,
+    )
+
+    assert not spy_create.called
+    assert repository.exists
+
+
+def test_repository_exists_create_if_not_exists(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that if repository exists and 'create_if_not_exists' is true, repository is not created."""
+    spy_create = mocker.spy(Repository, "create")
+
+    repository = Repository(
+        path=repository_init._path,
+        passphrase_file=repository_init._passphrase_file,
+        identity_file_path=repository_init.identity_file_path,
+        create_if_not_exists=True,
+    )
+
+    assert not spy_create.called
+    assert repository.exists
+
+
 def test_repository_locked(
     repository_init: Generator[Repository, None, None]
 ) -> None:
