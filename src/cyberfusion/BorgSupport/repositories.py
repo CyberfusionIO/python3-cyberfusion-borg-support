@@ -73,6 +73,7 @@ class Repository:
         path: str,
         passphrase_file: str,
         identity_file_path: Optional[str] = None,
+        create_if_not_exists: bool = False,
     ) -> None:
         """Set variables.
 
@@ -82,10 +83,21 @@ class Repository:
         private SSH key leaks, the attacker does NOT have access to the repository,
         as they also need the passphrase. The remote SSH server should use `borg
         serve` so that an attacker would not have regular shell access either.
+
+        If 'create_if_not_exists' is true, Borg repository will be created if
+        it does not exist yet. The encryption 'KEYFILE_BLAKE2' will be used. Note
+        that using this option causes a slight delay, as it checks whether the
+        repository exists or not.
         """
         self._path = path
         self._passphrase_file = passphrase_file
         self.identity_file_path = identity_file_path
+
+        if create_if_not_exists:
+            if not self.exists:
+                self.create(
+                    encryption=BorgRepositoryEncryptionName.KEYFILE_BLAKE2.value
+                )
 
     @property
     def passcommand(self) -> str:
