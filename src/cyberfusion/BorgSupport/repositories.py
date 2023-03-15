@@ -211,6 +211,7 @@ class Repository:
         https://github.com/borgbackup/borg/issues/271#issuecomment-378091437
         """
         MESSAGE_FAILED_ACQUIRE_LOCK = "Failed to create/acquire the lock"
+
         try:
             BorgRegularCommand().execute(
                 command=BorgCommand.SUBCOMMAND_LIST,
@@ -219,22 +220,31 @@ class Repository:
                 **self._safe_cli_options,
             )
         except CommandNonZeroError as e:
-            # Repository exists, but error occurred
+            lines = e.stderr.splitlines()
 
-            if e.stderr not in [
-                f"Repository {self.path} does not exist.\n",
-                f"{self.path} is not a valid repository. Check repo config.\n",
-            ] and not e.stderr.startswith(MESSAGE_FAILED_ACQUIRE_LOCK):
-                raise
+            # Directory does not exist
+
+            if f"Repository {self.path} does not exist." in lines:
+                return False
+
+            # Directory exists, but does not contain repository
+
+            if (
+                f"{self.path} is not a valid repository. Check repo config."
+                in lines
+            ):
+                return False
 
             # Repository exists, but is locked
 
-            if e.stderr.startswith(MESSAGE_FAILED_ACQUIRE_LOCK):
+            if any(
+                line.startswith(MESSAGE_FAILED_ACQUIRE_LOCK) for line in lines
+            ):
                 return True
 
-            # Repository does not exist
+            # Unexpected error occurred
 
-            return False
+            raise
 
         return True
 
