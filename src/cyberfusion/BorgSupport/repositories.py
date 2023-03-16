@@ -1,7 +1,6 @@
 """Classes for managing repositories."""
 
 import json
-import os
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
@@ -19,7 +18,8 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryPathInvalidError,
 )
 from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
-from cyberfusion.Common.Command import CommandNonZeroError, CyberfusionCommand
+from cyberfusion.Common import find_executable
+from cyberfusion.Common.Command import CommandNonZeroError
 from cyberfusion.Common.Filesystem import get_directory_size
 
 SCHEME_SSH = "ssh"
@@ -27,7 +27,7 @@ DEFAULT_PORT_SSH = 22
 
 CHARACTER_AT = "@"
 
-CAT_BIN = os.path.join(CyberfusionCommand.PATH_BIN, "cat")
+CAT_BIN = find_executable("cat")
 
 F = TypeVar("F", bound=Callable[..., Any])
 
