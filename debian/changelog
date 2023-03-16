@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.3.9.2) unstable; urgency=low
+
+  - Add find_executable
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Thu, 16 Mar 2023 11:03:00 +0200
+
 python3-cyberfusion-borg-support (1.3.9.1) unstable; urgency=low
 
   - Generic fixes for 1.3.9
