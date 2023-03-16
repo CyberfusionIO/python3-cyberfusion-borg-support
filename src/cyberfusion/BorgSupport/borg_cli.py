@@ -4,39 +4,17 @@ Follow 'good and preferred' order at https://borgbackup.readthedocs.io/en/stable
 """
 
 import json
-import os
 from typing import Dict, List, Optional
 
+from cyberfusion.Common import find_executable
 from cyberfusion.Common.Command import CyberfusionCommand
-
-
-def get_borg_bin() -> str:
-    """Return Borg binary in either local or system binary directory."""
-    local_path = os.path.join(CyberfusionCommand.PATH_USR_LOCAL_BIN, "borg")
-    system_path = os.path.join(CyberfusionCommand.PATH_USR_BIN, "borg")
-
-    if os.path.isfile(local_path):
-        return local_path
-
-    return system_path
-
-
-def get_true_bin() -> str:
-    """Return 'true' binary in either system or user binary directory."""
-    system_path = os.path.join(CyberfusionCommand.PATH_BIN, "true")
-    user_path = os.path.join(CyberfusionCommand.PATH_USR_BIN, "true")
-
-    if os.path.isfile(system_path):
-        return system_path
-
-    return user_path
 
 
 class BorgCommand:
     """Constants for Borg CLI."""
 
-    BORG_BIN = get_borg_bin()
-    TRUE_BIN = get_true_bin()
+    BORG_BIN = find_executable("borg")
+    TRUE_BIN = find_executable("true")
 
     # Subcommands
 
