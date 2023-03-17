@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.3.9.2.2) unstable; urgency=low
+
+  - Add missing Borg dependency
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 17 Mar 2023 11:29:00 +0200
+
 python3-cyberfusion-borg-support (1.3.9.2.1) unstable; urgency=low
 
   - Use find_executable for cat
