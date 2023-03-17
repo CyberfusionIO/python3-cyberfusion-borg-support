@@ -29,7 +29,7 @@ def test_repository_archives(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    assert len(repository_init.archives) == 1
+    assert len(repository_init.archives()) == 1
 
     assert archives[0].repository == repository_init
     assert archives[0]._name == "test"
@@ -534,16 +534,16 @@ def test_repository_prune(
 
     assert all(
         a._name in ["prunetest1", "prunetest2", "prunetest3"]
-        for a in repository_init.archives
+        for a in repository_init.archives()
     )
 
     assert repository_init.prune(keep_last=1) == ["prunetest1", "prunetest2"]
 
     assert all(
         a._name not in ["prunetest1", "prunetest2"]
-        for a in repository_init.archives
+        for a in repository_init.archives()
     )
-    assert all(a._name in ["prunetest3"] for a in repository_init.archives)
+    assert all(a._name in ["prunetest3"] for a in repository_init.archives())
 
 
 def test_repository_prune_keep_last(
