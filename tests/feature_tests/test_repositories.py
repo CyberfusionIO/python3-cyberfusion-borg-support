@@ -1,6 +1,5 @@
 import os
 from typing import Dict, Generator, List, Optional
-from unittest import mock
 
 import pytest
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
@@ -63,7 +62,7 @@ def test_repository_exists(
 
 
 def test_repository_exists_failure(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that original exception is raised when self.exists can't get archives list due to error."""
 
@@ -90,18 +89,21 @@ def test_repository_exists_failure(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        with pytest.raises(CommandNonZeroError):
-            repository_init.exists
+    )
+
+    with pytest.raises(CommandNonZeroError):
+        repository_init.exists
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_repository_exists_locked(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that no exception is raised when self.exists can't get archives due to lock."""
 
@@ -128,13 +130,16 @@ def test_repository_exists_locked(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        assert repository_init.exists
+    )
+
+    assert repository_init.exists
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_repository_size(
@@ -224,7 +229,7 @@ def test_repository_exists_create_if_not_exists(
 
 
 def test_repository_locked(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     def execute_side_effect(
         *,
@@ -251,19 +256,22 @@ def test_repository_locked(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        result = repository_init.is_locked
+    )
+
+    result = repository_init.is_locked
 
     assert result is True
 
+    mocker.stopall()  # Unlock for teardown
+
 
 def test_repository_not_locked_line_type(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that repository is not marked as locked because of type in line."""
 
@@ -292,19 +300,22 @@ def test_repository_not_locked_line_type(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        result = repository_init.is_locked
+    )
+
+    result = repository_init.is_locked
 
     assert result is False
 
+    mocker.stopall()  # Unlock for teardown
+
 
 def test_repository_not_locked_line_msgid(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     """Test that repository is not marked as locked because of msgid in line."""
 
@@ -333,15 +344,18 @@ def test_repository_not_locked_line_msgid(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        result = repository_init.is_locked
+    )
+
+    result = repository_init.is_locked
 
     assert result is False
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_repository_remote_size(
@@ -431,7 +445,7 @@ def test_repository_check_has_integrity(
 
 
 def test_repository_check_has_no_integrity(
-    repository_init: Generator[Repository, None, None]
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
     def execute_side_effect(
         *,
@@ -452,15 +466,18 @@ def test_repository_check_has_no_integrity(
                 rc=2,
             )
 
-        return mock.DEFAULT
+        return mocker.DEFAULT
 
-    with mock.patch(
+    mocker.patch(
         "cyberfusion.BorgSupport.borg_cli.BorgLoggedCommand.execute",
         side_effect=execute_side_effect,
-    ):
-        result = repository_init.check()
+    )
+
+    result = repository_init.check()
 
     assert result is False
+
+    mocker.stopall()  # Unlock for teardown
 
 
 def test_repository_prune_locked(
