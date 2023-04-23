@@ -8,7 +8,7 @@ setup(
     description="BorgSupport Python library/tools",
     author="William Edwards",
     author_email="wedwards@cyberfusion.nl",
-    url="https://vcs.cyberfusion.nl/cyberfusion/python3-cyberfusion-borg-support",
+    url="https://vcs.cyberfusion.nl/shared/python3-cyberfusion-borg-support",
     license="Closed",
     packages=[
         "cyberfusion.BorgSupport",
