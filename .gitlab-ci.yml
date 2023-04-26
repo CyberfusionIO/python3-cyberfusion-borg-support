@@ -24,9 +24,6 @@ unit test and feature test:
     - apt-get update
     - apt-get -y install borgbackup -t bullseye-backports
     - pip install --no-cache-dir -r requirements/test.txt
-    - cp $CI_PROJECT_DIR/progress_file_with_known_types.txt /tmp/progress_file_with_known_types.txt
-    - cp $CI_PROJECT_DIR/progress_file_with_unknown_types.txt /tmp/progress_file_with_unknown_types.txt
-    - cp $CI_PROJECT_DIR/progress_file_with_no_lines.txt /tmp/progress_file_with_no_lines.txt
     - PYTHONPATH=$CI_PROJECT_DIR/src:/usr/lib/python3/dist-packages pytest -vvv --cov-branch --cov=cyberfusion.BorgSupport --cov-config=.coveragerc --cov-fail-under=100 --junitxml=report-pytest.xml
   artifacts:
     reports:
