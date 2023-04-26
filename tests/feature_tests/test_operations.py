@@ -14,9 +14,7 @@ from cyberfusion.BorgSupport.operations import (
 def test_operation_attributes() -> None:
     # Get operation
 
-    operation = Operation(
-        progress_file="progress_file_with_known_types.txt"
-    )
+    operation = Operation(progress_file="progress_file_with_known_types.txt")
 
     # Test progress_file
 
