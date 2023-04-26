@@ -14,13 +14,11 @@ from cyberfusion.BorgSupport.operations import (
 def test_operation_attributes() -> None:
     # Get operation
 
-    operation = Operation(
-        progress_file="/tmp/progress_file_with_known_types.txt"
-    )
+    operation = Operation(progress_file="progress_file_with_known_types.txt")
 
     # Test progress_file
 
-    assert operation.progress_file == "/tmp/progress_file_with_known_types.txt"
+    assert operation.progress_file == "progress_file_with_known_types.txt"
 
     # Test lines
 
@@ -65,13 +63,13 @@ def test_operation_attributes() -> None:
 
 def test_operation_unknown_types_error() -> None:
     with pytest.raises(OperationLineNotImplementedError):
-        Operation(progress_file="/tmp/progress_file_with_unknown_types.txt")
+        Operation(progress_file="progress_file_with_unknown_types.txt")
 
 
 def test_operation_no_lines() -> None:
     # Get operation
 
-    operation = Operation(progress_file="/tmp/progress_file_with_no_lines.txt")
+    operation = Operation(progress_file="progress_file_with_no_lines.txt")
 
     # Test lines is empty
 

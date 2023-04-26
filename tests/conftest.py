@@ -19,13 +19,9 @@ def workspace_directory() -> Generator[str, None, None]:
         os.path.sep, "tmp", "borg-" + generate_random_string().lower()
     )
 
-    # Create
-
     os.mkdir(path)
 
     yield path
-
-    # Clean up
 
     shutil.rmtree(path)
 
@@ -36,14 +32,10 @@ def passphrase_file(
 ) -> Generator[str, None, None]:
     path = os.path.join(workspace_directory, "passphrase")
 
-    # Create
-
     with open(path, "w") as f:
         f.write("test")
 
     yield path
-
-    # Clean up
 
     os.unlink(path)
 
@@ -67,9 +59,6 @@ def repository_init(
 
     Size of empty repository is 42345 bytes.
     """
-
-    # Create
-
     path = os.path.join(workspace_directory, "repository2")
 
     repository = Repository(path=path, passphrase_file=passphrase_file)
@@ -77,8 +66,6 @@ def repository_init(
     repository.create(encryption="keyfile-blake2")
 
     yield repository
-
-    # Clean up
 
     repository.delete()
 
