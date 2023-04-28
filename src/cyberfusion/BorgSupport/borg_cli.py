@@ -114,7 +114,6 @@ class BorgLoggedCommand:
     """Abstract Borg CLI implementation for use in scripts, for running logged commands.
 
     Borg is able to write logs to stderr, see: https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#logging
-
     This can be used to monitor progress. This class implements the Borg CLI for
     commands that should be run in this way.
     """
@@ -162,6 +161,8 @@ class BorgLoggedCommand:
                 self.command,
                 env=environment,
                 cwd=working_directory,
-                stderr=f,
                 check=True,
+                # Write stderr to file instead of subprocess.PIPE, as output can
+                # be extremely large, mostly with BorgCommand.SUBCOMMAND_CHECK.
+                stderr=f,
             )
