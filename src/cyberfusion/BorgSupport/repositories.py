@@ -1,6 +1,7 @@
 """Classes for managing repositories."""
 
 import json
+import subprocess
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
@@ -19,7 +20,6 @@ from cyberfusion.BorgSupport.exceptions import (
 )
 from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
 from cyberfusion.Common import find_executable
-from cyberfusion.Common.Command import CommandNonZeroError
 from cyberfusion.Common.Filesystem import get_directory_size
 
 SCHEME_SSH = "ssh"
@@ -219,7 +219,7 @@ class Repository:
                 capture_stderr=True,
                 **self._safe_cli_options,
             )
-        except CommandNonZeroError as e:
+        except subprocess.CalledProcessError as e:
             lines = e.stderr.splitlines()
 
             # Directory does not exist
@@ -270,7 +270,7 @@ class Repository:
                 capture_stderr=True,
                 **self._safe_cli_options,
             )
-        except CommandNonZeroError as e:
+        except subprocess.CalledProcessError as e:
             # When RC is not 0, Borg will most likely have logged something. If
             # any of these log lines say that the command failed because there
             # was a lock, return False.
@@ -356,7 +356,7 @@ class Repository:
                 arguments=arguments,
                 **self._safe_cli_options,
             )
-        except CommandNonZeroError:
+        except subprocess.CalledProcessError:
             return False
 
         return True
