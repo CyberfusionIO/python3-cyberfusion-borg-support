@@ -4,10 +4,10 @@ Follow 'good and preferred' order at https://borgbackup.readthedocs.io/en/stable
 """
 
 import json
+import subprocess
 from typing import Dict, List, Optional
 
-from cyberfusion.Common import find_executable
-from cyberfusion.Common.Command import CyberfusionCommand
+from cyberfusion.Common import find_executable, get_tmp_file
 
 
 class BorgCommand:
@@ -90,15 +90,17 @@ class BorgRegularCommand:
         if not run:
             return
 
-        output = CyberfusionCommand(
-            command=self.command,
-            environment=environment,
-            capture_stderr=capture_stderr,
+        output = subprocess.run(
+            self.command,
+            env=environment,
+            check=True,
+            stdout=subprocess.PIPE,
+            text=True,
+            stderr=subprocess.PIPE if capture_stderr else None,
         )
 
         # Set attributes
 
-        self.rc = output.rc
         self.stdout = output.stdout
         self.stderr = output.stderr
 
@@ -114,7 +116,7 @@ class BorgLoggedCommand:
     Borg is able to write logs to stderr, see: https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#logging
 
     This can be used to monitor progress. This class implements the Borg CLI for
-    commands that should be run in this way. It only captures stderr, not stdout.
+    commands that should be run in this way.
     """
 
     def __init__(self) -> None:
@@ -139,6 +141,8 @@ class BorgLoggedCommand:
             command,
         ]
 
+        self.file = get_tmp_file()
+
         # Add arguments
 
         if identity_file_path:
@@ -153,17 +157,11 @@ class BorgLoggedCommand:
 
         # Execute command
 
-        output = CyberfusionCommand(
-            self.command,
-            environment=environment,
-            path=working_directory,
-            read=False,
-            unlink=False,
-            capture_stdout=False,
-            capture_stderr=True,
-        )
-
-        # Set attributes
-
-        self.file = output.stderr_file
-        self.rc = output.rc
+        with open(self.file, "w") as f:
+            subprocess.run(
+                self.command,
+                env=environment,
+                cwd=working_directory,
+                stderr=f,
+                check=True,
+            )

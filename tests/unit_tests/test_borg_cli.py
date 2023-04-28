@@ -12,7 +12,6 @@ from cyberfusion.BorgSupport.borg_cli import (
     _get_rsh_argument,
 )
 from cyberfusion.BorgSupport.repositories import Repository
-from cyberfusion.Common.Command import CommandNonZeroError
 
 
 def test_get_rsh_argument() -> None:

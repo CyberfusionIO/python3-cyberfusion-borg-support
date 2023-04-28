@@ -1,4 +1,5 @@
 import os
+import subprocess
 from typing import Generator
 
 import pytest
@@ -8,7 +9,6 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.repositories import Repository
-from cyberfusion.Common.Command import CommandNonZeroError
 
 
 def test_borg_regular_command_attributes_stdout(
@@ -22,13 +22,12 @@ def test_borg_regular_command_attributes_stdout(
 
     assert borg_regular_command.stdout.startswith("borg ")
     assert borg_regular_command.stderr is None
-    assert borg_regular_command.rc == 0
 
 
 def test_borg_regular_command_attributes_stderr(
     borg_regular_command: BorgRegularCommand,
 ) -> None:
-    with pytest.raises(CommandNonZeroError) as e:
+    with pytest.raises(subprocess.CalledProcessError) as e:
         borg_regular_command.execute(
             command=None,
             arguments=["--doesntexist"],
@@ -37,7 +36,6 @@ def test_borg_regular_command_attributes_stderr(
 
     assert e.value.stdout is not None
     assert e.value.stderr is not None
-    assert e.value.rc == 2
 
 
 def test_borg_logged_command_attributes(
@@ -56,4 +54,3 @@ def test_borg_logged_command_attributes(
     )
 
     assert borg_logged_command.file
-    assert borg_logged_command.rc == 0
