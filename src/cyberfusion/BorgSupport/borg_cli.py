@@ -162,7 +162,8 @@ class BorgLoggedCommand:
                 env=environment,
                 cwd=working_directory,
                 check=True,
-                # Write stderr to file instead of subprocess.PIPE, as output can
-                # be extremely large, mostly with BorgCommand.SUBCOMMAND_CHECK.
+                # Write to file so that callers can pass this to 'Operation'
+                # as 'progress_file'. Also, stderr should be written to file
+                # as output can be extremely large, mostly with SUBCOMMAND_CHECK.
                 stderr=f,
             )
