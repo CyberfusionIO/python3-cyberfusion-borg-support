@@ -15,11 +15,9 @@ from cyberfusion.BorgSupport.borg_cli import (
 )
 from cyberfusion.BorgSupport.exceptions import (
     RepositoryLockedError,
-    RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
 from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
-from cyberfusion.Common.Filesystem import get_directory_size
 
 SCHEME_SSH = "ssh"
 DEFAULT_PORT_SSH = 22
@@ -266,24 +264,6 @@ class Repository:
         # RC is 0, so there was no lock
 
         return False
-
-    @property
-    def size(self) -> int:
-        """Get size of repository in bytes.
-
-        This method calculates the size of the repository directory on disk.
-        Therefore, it must be run on a machine that has filesystem access to
-        the repository directory. This is usually only the Borg server.
-
-        More information: https://github.com/borgbackup/borg/discussions/6509
-        """
-
-        # Directory size can only be retrieved when repository on local filesystem
-
-        if self._is_remote:
-            raise RepositoryNotLocalError
-
-        return get_directory_size(self.path)
 
     def archives(self) -> List[Archive]:
         """Get archives in repository."""
