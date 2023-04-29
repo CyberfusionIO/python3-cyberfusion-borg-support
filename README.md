@@ -25,6 +25,8 @@ Run the following command to install the package from PyPI:
 
     pip3 install python3-cyberfusion-borg-support
 
+Next, install Borg according to the [documentation](https://borgbackup.readthedocs.io/en/stable/installation.html#distribution-package).
+
 # Configure
 
 No configuration is supported.
