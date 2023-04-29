@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
 
-from cyberfusion.BorgSupport import Borg
+from cyberfusion.BorgSupport import Borg, PassphraseFile
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
@@ -19,7 +19,6 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryPathInvalidError,
 )
 from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
-from cyberfusion.Common import find_executable
 from cyberfusion.Common.Filesystem import get_directory_size
 
 SCHEME_SSH = "ssh"
@@ -27,7 +26,6 @@ DEFAULT_PORT_SSH = 22
 
 CHARACTER_AT = "@"
 
-CAT_BIN = find_executable("cat")
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -71,7 +69,7 @@ class Repository:
         self,
         *,
         path: str,
-        passphrase_file: str,
+        passphrase: str,
         identity_file_path: Optional[str] = None,
         create_if_not_exists: bool = False,
     ) -> None:
@@ -90,7 +88,7 @@ class Repository:
         repository exists or not.
         """
         self._path = path
-        self._passphrase_file = passphrase_file
+        self.passphrase = passphrase
         self.identity_file_path = identity_file_path
 
         if create_if_not_exists:
@@ -98,11 +96,6 @@ class Repository:
                 self.create(
                     encryption=BorgRepositoryEncryptionName.KEYFILE_BLAKE2.value
                 )
-
-    @property
-    def passcommand(self) -> str:
-        """Get passcommand which reads passphrase from passphrase file."""
-        return " ".join([CAT_BIN, self._passphrase_file])
 
     @property
     def path(self) -> str:
@@ -137,36 +130,11 @@ class Repository:
         return urlparse(self.path).scheme == SCHEME_SSH
 
     @property
-    def _safe_cli_options(
+    def _cli_options(
         self,
     ) -> Dict[str, Union[Optional[str], Dict[str, str]]]:
-        """Get safe CLI options for Borg command.
-
-        The passphrase is retrieved by passing a command to BORG_PASSCOMMAND. This
-        is used instead of BORG_PASSPHRASE in order to to prevent the passphrase
-        from showing up in the environment variables. See:
-
-        https://borgbackup.readthedocs.io/en/stable/faq.html#how-can-i-specify-the-encryption-passphrase-programmatically
-        """
+        """Get CLI options for Borg command."""
         return {
-            "environment": {"BORG_PASSCOMMAND": self.passcommand},
-            "identity_file_path": self.identity_file_path,
-        }
-
-    @property
-    def _dangerous_cli_options(
-        self,
-    ) -> Dict[str, Union[Optional[str], Dict[str, str]]]:
-        """Get dangerous CLI options for Borg command.
-
-        These options are dangerous because it contains an automatic answer for
-        delete.
-        """
-        return {
-            "environment": {
-                "BORG_PASSCOMMAND": self.passcommand,
-                "BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES",
-            },
             "identity_file_path": self.identity_file_path,
         }
 
@@ -180,11 +148,13 @@ class Repository:
 
         # Execute command
 
-        BorgRegularCommand().execute(
-            command=BorgCommand.SUBCOMMAND_INIT,
-            arguments=arguments,
-            **self._safe_cli_options,
-        )
+        with PassphraseFile(self.passphrase) as environment:
+            BorgRegularCommand().execute(
+                command=BorgCommand.SUBCOMMAND_INIT,
+                arguments=arguments,
+                **self._cli_options,
+                environment=environment,
+            )
 
     @check_repository_not_locked
     def delete(self) -> None:
@@ -196,11 +166,14 @@ class Repository:
 
         # Execute command
 
-        BorgRegularCommand().execute(
-            command=BorgCommand.SUBCOMMAND_DELETE,
-            arguments=arguments,
-            **self._dangerous_cli_options,
-        )
+        with PassphraseFile(self.passphrase) as environment:
+            BorgRegularCommand().execute(
+                command=BorgCommand.SUBCOMMAND_DELETE,
+                arguments=arguments,
+                **self._cli_options,
+                environment=environment
+                | {"BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES"},
+            )
 
     @property
     def exists(self) -> bool:
@@ -213,12 +186,14 @@ class Repository:
         MESSAGE_FAILED_ACQUIRE_LOCK = "Failed to create/acquire the lock"
 
         try:
-            BorgRegularCommand().execute(
-                command=BorgCommand.SUBCOMMAND_LIST,
-                arguments=[self.path],
-                capture_stderr=True,
-                **self._safe_cli_options,
-            )
+            with PassphraseFile(self.passphrase) as environment:
+                BorgRegularCommand().execute(
+                    command=BorgCommand.SUBCOMMAND_LIST,
+                    arguments=[self.path],
+                    capture_stderr=True,
+                    **self._cli_options,
+                    environment=environment,
+                )
         except subprocess.CalledProcessError as e:
             lines = e.stderr.splitlines()
 
@@ -264,12 +239,14 @@ class Repository:
         command = BorgRegularCommand()
 
         try:
-            command.execute(
-                command=BorgCommand.SUBCOMMAND_WITH_LOCK,
-                arguments=arguments,
-                capture_stderr=True,
-                **self._safe_cli_options,
-            )
+            with PassphraseFile(self.passphrase) as environment:
+                command.execute(
+                    command=BorgCommand.SUBCOMMAND_WITH_LOCK,
+                    arguments=arguments,
+                    capture_stderr=True,
+                    **self._cli_options,
+                    environment=environment,
+                )
         except subprocess.CalledProcessError as e:
             # When RC is not 0, Borg will most likely have logged something. If
             # any of these log lines say that the command failed because there
@@ -319,12 +296,15 @@ class Repository:
         # Execute command
 
         command = BorgRegularCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_LIST,
-            arguments=arguments,
-            json_format=True,
-            **self._safe_cli_options,
-        )
+
+        with PassphraseFile(self.passphrase) as environment:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_LIST,
+                arguments=arguments,
+                json_format=True,
+                **self._cli_options,
+                environment=environment,
+            )
 
         for archive in command.stdout["archives"]:
             results.append(
@@ -351,11 +331,13 @@ class Repository:
         # Execute command
 
         try:
-            BorgLoggedCommand().execute(
-                command=BorgCommand.SUBCOMMAND_CHECK,
-                arguments=arguments,
-                **self._safe_cli_options,
-            )
+            with PassphraseFile(self.passphrase) as environment:
+                BorgLoggedCommand().execute(
+                    command=BorgCommand.SUBCOMMAND_CHECK,
+                    arguments=arguments,
+                    **self._cli_options,
+                    environment=environment,
+                )
         except subprocess.CalledProcessError:
             return False
 
@@ -406,11 +388,13 @@ class Repository:
 
         # Execute command
 
-        BorgRegularCommand().execute(
-            command=BorgCommand.SUBCOMMAND_PRUNE,
-            arguments=arguments,
-            **self._safe_cli_options,
-        )
+        with PassphraseFile(self.passphrase) as environment:
+            BorgRegularCommand().execute(
+                command=BorgCommand.SUBCOMMAND_PRUNE,
+                arguments=arguments,
+                **self._cli_options,
+                environment=environment,
+            )
 
         # Get archives after prune
 
@@ -441,8 +425,10 @@ class Repository:
 
         # Execute command
 
-        BorgRegularCommand().execute(
-            command=BorgCommand.SUBCOMMAND_COMPACT,
-            arguments=arguments,
-            **self._safe_cli_options,
-        )
+        with PassphraseFile(self.passphrase) as environment:
+            BorgRegularCommand().execute(
+                command=BorgCommand.SUBCOMMAND_COMPACT,
+                arguments=arguments,
+                **self._cli_options,
+                environment=environment,
+            )

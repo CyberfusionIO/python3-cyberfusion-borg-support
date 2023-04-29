@@ -27,32 +27,23 @@ def workspace_directory() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def passphrase_file(
-    workspace_directory: Generator[str, None, None]
-) -> Generator[str, None, None]:
-    path = os.path.join(workspace_directory, "passphrase")
-
-    with open(path, "w") as f:
-        f.write("test")
-
-    yield path
-
-    os.unlink(path)
+def passphrase() -> str:
+    return generate_random_string()
 
 
 @pytest.fixture
 def repository(
-    passphrase_file: Generator[str, None, None],
+    passphrase: str,
     workspace_directory: Generator[str, None, None],
 ) -> Generator[Repository, None, None]:
     path = os.path.join(workspace_directory, "repository1")
 
-    yield Repository(path=path, passphrase_file=passphrase_file)
+    yield Repository(path=path, passphrase=passphrase)
 
 
 @pytest.fixture
 def repository_init(
-    passphrase_file: Generator[str, None, None],
+    passphrase: str,
     workspace_directory: Generator[str, None, None],
 ) -> Generator[Repository, None, None]:
     """Already initted repository.
@@ -61,7 +52,7 @@ def repository_init(
     """
     path = os.path.join(workspace_directory, "repository2")
 
-    repository = Repository(path=path, passphrase_file=passphrase_file)
+    repository = Repository(path=path, passphrase=passphrase)
 
     repository.create(encryption="keyfile-blake2")
 
