@@ -5,6 +5,7 @@ from typing import Generator
 import pytest
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
+from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
     BorgLoggedCommand,
@@ -41,23 +42,25 @@ def test_borg_logged_command_identity_file_path(
     borg_logged_command: BorgLoggedCommand,
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    # Remove identity_file_path from default _safe_cli_options, as we need to
+    # Remove identity_file_path from default _cli_options, as we need to
     # override the value of None for this test
 
-    _safe_cli_options = deepcopy(repository_init._safe_cli_options)
-    del _safe_cli_options["identity_file_path"]
+    _cli_options = deepcopy(repository_init._cli_options)
+    del _cli_options["identity_file_path"]
 
-    borg_logged_command.execute(
-        run=False,
-        command="create",
-        arguments=[
-            os.path.join(workspace_directory, "repository2")
-            + "::testarchivename",
-            "/root",
-        ],
-        identity_file_path="/tmp/test.key",
-        **_safe_cli_options,
-    )
+    with PassphraseFile(repository_init.passphrase) as environment:
+        borg_logged_command.execute(
+            run=False,
+            command="create",
+            arguments=[
+                os.path.join(workspace_directory, "repository2")
+                + "::testarchivename",
+                "/root",
+            ],
+            identity_file_path="/tmp/test.key",
+            environment=environment,
+            **_cli_options,
+        )
 
     assert borg_logged_command.command == [
         BorgCommand.BORG_BIN,
@@ -99,7 +102,7 @@ def test_borg_logged_command_command_and_arguments(
             + "::testarchivename",
             "/root",
         ],
-        **repository_init._safe_cli_options,
+        **repository_init._cli_options,
     )
 
     assert borg_logged_command.command == [

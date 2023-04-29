@@ -17,10 +17,9 @@ from cyberfusion.BorgSupport.repositories import Repository
 
 def test_repository_attributes(
     repository: Generator[Repository, None, None],
-    passphrase_file: Generator[str, None, None],
+    passphrase: str,
 ) -> None:
-    assert repository._passphrase_file == passphrase_file
-    assert repository.passcommand == f"/bin/cat {passphrase_file}"
+    assert repository.passphrase == passphrase
     assert repository.identity_file_path is None
 
 
@@ -154,7 +153,7 @@ def test_repository_not_locked(
 
 def test_repository_not_exists_create_if_not_exists(
     mocker: MockerFixture,
-    passphrase_file: Generator[str, None, None],
+    passphrase: str,
     workspace_directory: Generator[str, None, None],
 ) -> None:
     """Test that if repository does not exist and 'create_if_not_exists' is true, repository is created."""
@@ -164,7 +163,7 @@ def test_repository_not_exists_create_if_not_exists(
 
     repository = Repository(
         path=path,
-        passphrase_file=passphrase_file,
+        passphrase=passphrase,
         create_if_not_exists=True,
     )
 
@@ -174,7 +173,7 @@ def test_repository_not_exists_create_if_not_exists(
 
 def test_repository_not_exists_not_create_if_not_exists(
     mocker: MockerFixture,
-    passphrase_file: Generator[str, None, None],
+    passphrase: str,
     workspace_directory: Generator[str, None, None],
 ) -> None:
     """Test that if repository does not exist and 'create_if_not_exists' is false, repository is not created."""
@@ -184,7 +183,7 @@ def test_repository_not_exists_not_create_if_not_exists(
 
     repository = Repository(
         path=path,
-        passphrase_file=passphrase_file,
+        passphrase=passphrase,
         create_if_not_exists=False,
     )
 
@@ -200,7 +199,7 @@ def test_repository_exists_not_create_if_not_exists(
 
     repository = Repository(
         path=repository_init._path,
-        passphrase_file=repository_init._passphrase_file,
+        passphrase=repository_init.passphrase,
         identity_file_path=repository_init.identity_file_path,
         create_if_not_exists=False,
     )
@@ -217,7 +216,7 @@ def test_repository_exists_create_if_not_exists(
 
     repository = Repository(
         path=repository_init._path,
-        passphrase_file=repository_init._passphrase_file,
+        passphrase=repository_init.passphrase,
         identity_file_path=repository_init.identity_file_path,
         create_if_not_exists=True,
     )
@@ -354,10 +353,10 @@ def test_repository_not_locked_line_msgid(
 
 
 def test_repository_remote_size(
-    passphrase_file: Generator[str, None, None]
+    passphrase: Generator[str, None, None]
 ) -> None:
     repository = Repository(
-        path="ssh://user@host:22/path/to/repo", passphrase_file=passphrase_file
+        path="ssh://user@host:22/path/to/repo", passphrase=passphrase
     )
 
     with pytest.raises(RepositoryNotLocalError):
@@ -365,10 +364,10 @@ def test_repository_remote_size(
 
 
 def test_repository_attributes_remote_without_scheme(
-    passphrase_file: Generator[str, None, None],
+    passphrase: Generator[str, None, None],
 ) -> None:
     repository = Repository(
-        path="user@host:/path/to/repo", passphrase_file=passphrase_file
+        path="user@host:/path/to/repo", passphrase=passphrase
     )
 
     with pytest.raises(RepositoryPathInvalidError):
@@ -376,10 +375,10 @@ def test_repository_attributes_remote_without_scheme(
 
 
 def test_repository_attributes_remote_with_scheme(
-    passphrase_file: Generator[str, None, None],
+    passphrase: Generator[str, None, None],
 ) -> None:
     repository = Repository(
-        path="ssh://user@host:22/path/to/repo", passphrase_file=passphrase_file
+        path="ssh://user@host:22/path/to/repo", passphrase=passphrase
     )
 
     assert repository.path == "ssh://user@host:22/path/to/repo"
@@ -387,12 +386,12 @@ def test_repository_attributes_remote_with_scheme(
 
 
 def test_repository_attributes_local(
-    passphrase_file: Generator[str, None, None],
+    passphrase: Generator[str, None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
     path = os.path.join(workspace_directory, "repository3")
 
-    repository = Repository(path=path, passphrase_file=passphrase_file)
+    repository = Repository(path=path, passphrase=passphrase)
 
     assert repository.path == path
     assert not repository._is_remote

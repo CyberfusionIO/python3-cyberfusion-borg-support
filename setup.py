@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="python3-cyberfusion-borg-support",
-    version="1.3.10.1",
+    version="1.4",
     description="BorgSupport Python library/tools",
     author="William Edwards",
     author_email="wedwards@cyberfusion.nl",

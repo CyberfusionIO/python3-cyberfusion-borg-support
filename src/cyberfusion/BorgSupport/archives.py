@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, TypeVar
 
 from cached_property import cached_property
 
+from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
     BorgCommand,
     BorgLoggedCommand,
@@ -233,11 +234,14 @@ class Archive:
         results = []
 
         command = BorgRegularCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_LIST,
-            arguments=arguments,
-            **self.repository._safe_cli_options,
-        )
+
+        with PassphraseFile(self.repository.passphrase) as environment:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_LIST,
+                arguments=arguments,
+                **self.repository._cli_options,
+                environment=environment,
+            )
 
         for _line in command.stdout.splitlines():
             line = json.loads(_line)
@@ -307,12 +311,15 @@ class Archive:
         # Execute command
 
         command = BorgLoggedCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_CREATE,
-            arguments=arguments,
-            working_directory=working_directory,
-            **self.repository._safe_cli_options,
-        )
+
+        with PassphraseFile(self.repository.passphrase) as environment:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_CREATE,
+                arguments=arguments,
+                working_directory=working_directory,
+                **self.repository._cli_options,
+                environment=environment,
+            )
 
         # Remove paths
 
@@ -358,12 +365,15 @@ class Archive:
         # Execute command
 
         command = BorgLoggedCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_EXTRACT,
-            arguments=arguments,
-            working_directory=destination_path,  # Borg extracts in working directory
-            **self.repository._safe_cli_options,
-        )
+
+        with PassphraseFile(self.repository.passphrase) as environment:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_EXTRACT,
+                arguments=arguments,
+                working_directory=destination_path,  # Borg extracts in working directory
+                **self.repository._cli_options,
+                environment=environment,
+            )
 
         return Operation(progress_file=command.file), destination_path
 
@@ -399,11 +409,14 @@ class Archive:
         # Execute command
 
         command = BorgLoggedCommand()
-        command.execute(
-            command=BorgCommand.SUBCOMMAND_EXPORT_TAR,
-            arguments=arguments,
-            **self.repository._safe_cli_options,
-        )
+
+        with PassphraseFile(self.repository.passphrase) as environment:
+            command.execute(
+                command=BorgCommand.SUBCOMMAND_EXPORT_TAR,
+                arguments=arguments,
+                **self.repository._cli_options,
+                environment=environment,
+            )
 
         return (
             Operation(progress_file=command.file),

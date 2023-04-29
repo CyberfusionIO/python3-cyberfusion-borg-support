@@ -4,6 +4,7 @@ from typing import Generator
 
 import pytest
 
+from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
@@ -43,14 +44,16 @@ def test_borg_logged_command_attributes(
     borg_logged_command: BorgLoggedCommand,
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    borg_logged_command.execute(
-        command="create",
-        arguments=[
-            os.path.join(workspace_directory, "repository2")
-            + "::testarchivename",
-            "/bin/sh",
-        ],
-        **repository_init._safe_cli_options,
-    )
+    with PassphraseFile(repository_init.passphrase) as environment:
+        borg_logged_command.execute(
+            command="create",
+            arguments=[
+                os.path.join(workspace_directory, "repository2")
+                + "::testarchivename",
+                "/bin/sh",
+            ],
+            environment=environment,
+            **repository_init._cli_options,
+        )
 
     assert borg_logged_command.file
