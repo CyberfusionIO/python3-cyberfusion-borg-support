@@ -9,7 +9,6 @@ from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand
 from cyberfusion.BorgSupport.exceptions import (
     RepositoryLockedError,
-    RepositoryNotLocalError,
     RepositoryPathInvalidError,
 )
 from cyberfusion.BorgSupport.repositories import Repository
@@ -137,12 +136,6 @@ def test_repository_exists_locked(
     assert repository_init.exists
 
     mocker.stopall()  # Unlock for teardown
-
-
-def test_repository_size(
-    repository_init: Generator[Repository, None, None]
-) -> None:
-    assert repository_init.size
 
 
 def test_repository_not_locked(
@@ -350,17 +343,6 @@ def test_repository_not_locked_line_msgid(
     assert result is False
 
     mocker.stopall()  # Unlock for teardown
-
-
-def test_repository_remote_size(
-    passphrase: Generator[str, None, None]
-) -> None:
-    repository = Repository(
-        path="ssh://user@host:22/path/to/repo", passphrase=passphrase
-    )
-
-    with pytest.raises(RepositoryNotLocalError):
-        repository.size
 
 
 def test_repository_attributes_remote_without_scheme(
