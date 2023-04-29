@@ -4,7 +4,7 @@ import os
 from typing import Dict, Tuple
 
 from cyberfusion.BorgSupport.borg_cli import BorgCommand, BorgRegularCommand
-from cyberfusion.Common import find_executable, get_tmp_file
+from cyberfusion.BorgSupport.utilities import find_executable, get_tmp_file
 
 CAT_BIN = find_executable("cat")
 
@@ -55,7 +55,7 @@ class PassphraseFile:
 
         self._passphrase = passphrase
 
-    def __enter__(self) -> Dict[str, Dict[str, str]]:
+    def __enter__(self) -> Dict[str, str]:
         """Create file and write passphrase.
 
         Returns environment variable for use with Borg CLI.

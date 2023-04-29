@@ -10,7 +10,10 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.repositories import Repository
-from cyberfusion.Common import generate_random_string, get_tmp_file
+from cyberfusion.BorgSupport.utilities import (
+    generate_random_string,
+    get_tmp_file,
+)
 
 
 @pytest.fixture

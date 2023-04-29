@@ -12,7 +12,7 @@ from cyberfusion.BorgSupport.archives import Archive, UNIXFileType
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.repositories import Repository
-from cyberfusion.Common import generate_random_string
+from cyberfusion.BorgSupport.utilities import generate_random_string
 
 
 def test_archive_extract_locked(
