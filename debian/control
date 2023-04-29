@@ -8,5 +8,5 @@ Standards-Version: 4.3.0
 Package: python3-cyberfusion-borg-support
 Architecture: all
 Depends: python3, python3-cached-property, borgbackup, ${misc:Depends}
-Description: BorgSupport Python library/tools
- BorgSupport allows for basic management of Borg installations.
+Description: Library for Borg.
+ Library for Borg.
