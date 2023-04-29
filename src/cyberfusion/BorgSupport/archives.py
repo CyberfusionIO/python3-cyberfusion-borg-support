@@ -18,7 +18,10 @@ from cyberfusion.BorgSupport.borg_cli import (
 )
 from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
 from cyberfusion.BorgSupport.operations import Operation
-from cyberfusion.Common import generate_random_string, get_md5_hash
+from cyberfusion.BorgSupport.utilities import (
+    generate_random_string,
+    get_md5_hash,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from cyberfusion.BorgSupport.repositories import Repository

@@ -7,7 +7,7 @@ import json
 import subprocess
 from typing import Dict, List, Optional
 
-from cyberfusion.Common import find_executable, get_tmp_file
+from cyberfusion.BorgSupport.utilities import find_executable, get_tmp_file
 
 
 class BorgCommand:
