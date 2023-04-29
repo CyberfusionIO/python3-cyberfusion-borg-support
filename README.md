@@ -25,7 +25,7 @@ This library does not require any configuration.
 
 # Usage
 
-## Basic
+## Example
 
 ```python
 from cyberfusion.BorgSupport.repositories import Repository
