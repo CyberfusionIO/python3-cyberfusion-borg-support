@@ -19,6 +19,12 @@ Run the following commands to build a Debian package:
     mk-build-deps -i -t 'apt -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     dpkg-buildpackage -us -uc
 
+## PyPI
+
+Run the following command to install the package from PyPI:
+
+    pip3 install python3-cyberfusion-borg-support
+
 # Configure
 
 No configuration is supported.
