@@ -1,3 +1,10 @@
+python3-cyberfusion-borg-support (1.4.1) unstable; urgency=low
+
+  - Drop dependency on Common
+  - Remove Repository.size
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Sat, 29 Apr 2023 16:50:00 +0200
+
 python3-cyberfusion-borg-support (1.4) unstable; urgency=low
 
   - Take passphrase instead of passphrase file
