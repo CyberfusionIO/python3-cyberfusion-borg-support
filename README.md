@@ -21,7 +21,7 @@ Run the following commands to build a Debian package:
 
 # Configure
 
-This library does not require any configuration.
+No configuration is supported.
 
 # Usage
 
