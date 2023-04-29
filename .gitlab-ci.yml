@@ -3,6 +3,7 @@ include:
     ref: main
     file:
       - '/base.yml'
+      - '/pypi-packages.yml'
       - '/debian-packages.yml'
       - '/python.yml'
 
