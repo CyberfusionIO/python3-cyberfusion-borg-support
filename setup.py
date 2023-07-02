@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.9",
     author="William Edwards",
     author_email="wedwards@cyberfusion.nl",
-    url="https://github.com/CyberfusionNL/python3-cyberfusion-borg-support",
+    url="https://github.com/CyberfusionIO/python3-cyberfusion-borg-support",
     platforms=["linux"],
     packages=[
         "cyberfusion.BorgSupport",
