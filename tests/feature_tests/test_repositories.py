@@ -8,6 +8,8 @@ from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand
 from cyberfusion.BorgSupport.exceptions import (
+    LoggedCommandFailedError,
+    RegularCommandFailedError,
     RepositoryLockedError,
     RepositoryPathInvalidError,
 )
@@ -76,14 +78,14 @@ def test_repository_exists_failure(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "list":
-            raise subprocess.CalledProcessError(
-                cmd=[
+            raise RegularCommandFailedError(
+                command=[
                     BorgCommand.BORG_BIN,
                     "list",
                     repository_init.path,
                 ],
                 stderr="Something went wrong",
-                returncode=2,
+                return_code=2,
             )
 
         return mocker.DEFAULT
@@ -93,7 +95,7 @@ def test_repository_exists_failure(
         side_effect=execute_side_effect,
     )
 
-    with pytest.raises(subprocess.CalledProcessError):
+    with pytest.raises(RegularCommandFailedError):
         repository_init.exists
 
     mocker.stopall()  # Unlock for teardown
@@ -116,14 +118,14 @@ def test_repository_exists_locked(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "list":
-            raise subprocess.CalledProcessError(
-                cmd=[
+            raise RegularCommandFailedError(
+                command=[
                     BorgCommand.BORG_BIN,
                     "list",
                     repository_init.path,
                 ],
                 stderr="Failed to create/acquire the lock /Users/williamedwards/borg/test/lock.exclusive (timeout).",
-                returncode=2,
+                return_code=2,
             )
 
         return mocker.DEFAULT
@@ -233,8 +235,8 @@ def test_repository_locked(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "with-lock":
-            raise subprocess.CalledProcessError(
-                cmd=[
+            raise RegularCommandFailedError(
+                command=[
                     BorgCommand.BORG_BIN,
                     "with-lock",
                     "--log-json",
@@ -242,7 +244,7 @@ def test_repository_locked(
                     "/bin/true",
                 ],
                 stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-                returncode=2,
+                return_code=2,
             )
 
         return mocker.DEFAULT
@@ -276,8 +278,8 @@ def test_repository_not_locked_line_type(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "with-lock":
-            raise subprocess.CalledProcessError(
-                cmd=[
+            raise RegularCommandFailedError(
+                command=[
                     BorgCommand.BORG_BIN,
                     "with-lock",
                     "--log-json",
@@ -285,7 +287,7 @@ def test_repository_not_locked_line_type(
                     "/bin/true",
                 ],
                 stderr='{"type": "progress_percent", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-                returncode=2,
+                return_code=2,
             )
 
         return mocker.DEFAULT
@@ -319,8 +321,8 @@ def test_repository_not_locked_line_msgid(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "with-lock":
-            raise subprocess.CalledProcessError(
-                cmd=[
+            raise RegularCommandFailedError(
+                command=[
                     BorgCommand.BORG_BIN,
                     "with-lock",
                     "--log-json",
@@ -328,7 +330,7 @@ def test_repository_not_locked_line_msgid(
                     "/bin/true",
                 ],
                 stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockError"}',
-                returncode=2,
+                return_code=2,
             )
 
         return mocker.DEFAULT
@@ -382,7 +384,7 @@ def test_repository_attributes_local(
 def test_repository_init_already_exists(
     repository_init: Generator[Repository, None, None]
 ) -> None:
-    with pytest.raises(subprocess.CalledProcessError):
+    with pytest.raises(RegularCommandFailedError):
         repository_init.create(encryption="keyfile-blake2")
 
 
@@ -435,10 +437,10 @@ def test_repository_check_has_no_integrity(
     ) -> None:
         """Raise exception if command is expected. Call original method otherwise."""
         if command == "check":
-            raise subprocess.CalledProcessError(
-                cmd=[BorgCommand.BORG_BIN, "check", repository_init.path],
-                stderr=None,
-                returncode=2,
+            raise LoggedCommandFailedError(
+                command=[BorgCommand.BORG_BIN, "check", repository_init.path],
+                return_code=2,
+                output_file_path="/tmp/foobar.txt",
             )
 
         return mocker.DEFAULT

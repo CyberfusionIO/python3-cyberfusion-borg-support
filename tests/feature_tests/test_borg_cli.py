@@ -9,6 +9,7 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
 )
+from cyberfusion.BorgSupport.exceptions import RegularCommandFailedError
 from cyberfusion.BorgSupport.repositories import Repository
 
 
@@ -28,15 +29,17 @@ def test_borg_regular_command_attributes_stdout(
 def test_borg_regular_command_attributes_stderr(
     borg_regular_command: BorgRegularCommand,
 ) -> None:
-    with pytest.raises(subprocess.CalledProcessError) as e:
-        borg_regular_command.execute(
-            command=None,
-            arguments=["--doesntexist"],
-            capture_stderr=True,
-        )
+    borg_regular_command.execute(
+        command=None,
+        arguments=[
+            "--version",  # Writes to stdout
+            "--show-rc",  # Writes to stderr
+        ],
+        capture_stderr=True,
+    )
 
-    assert e.value.stdout is not None
-    assert e.value.stderr is not None
+    assert borg_regular_command.stdout is not None
+    assert borg_regular_command.stderr is not None
 
 
 def test_borg_logged_command_attributes(

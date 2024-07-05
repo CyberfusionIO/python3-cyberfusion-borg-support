@@ -12,6 +12,10 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
     _get_rsh_argument,
 )
+from cyberfusion.BorgSupport.exceptions import (
+    LoggedCommandFailedError,
+    RegularCommandFailedError,
+)
 from cyberfusion.BorgSupport.repositories import Repository
 
 
@@ -125,3 +129,20 @@ def test_borg_regular_command_json(
         "info",
         "--json",
     ]
+
+
+def test_borg_regular_command_raises_exception(
+    borg_regular_command: BorgRegularCommand,
+) -> None:
+    with pytest.raises(RegularCommandFailedError) as e:
+        borg_regular_command.execute(command="doesntexist")
+
+
+def test_borg_logged_command_raises_exception(
+    borg_logged_command: BorgLoggedCommand,
+) -> None:
+    with pytest.raises(LoggedCommandFailedError) as e:
+        borg_logged_command.execute(
+            command="doesntexist",
+            arguments=[],
+        )

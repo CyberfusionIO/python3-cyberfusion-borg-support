@@ -1,7 +1,6 @@
 """Classes for managing repositories."""
 
 import json
-import subprocess
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
@@ -14,6 +13,8 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.exceptions import (
+    LoggedCommandFailedError,
+    RegularCommandFailedError,
     RepositoryLockedError,
     RepositoryPathInvalidError,
 )
@@ -192,7 +193,7 @@ class Repository:
                     **self._cli_options,
                     environment=environment,
                 )
-        except subprocess.CalledProcessError as e:
+        except RegularCommandFailedError as e:
             lines = e.stderr.splitlines()
 
             # Directory does not exist
@@ -245,7 +246,7 @@ class Repository:
                     **self._cli_options,
                     environment=environment,
                 )
-        except subprocess.CalledProcessError as e:
+        except RegularCommandFailedError as e:
             # When RC is not 0, Borg will most likely have logged something. If
             # any of these log lines say that the command failed because there
             # was a lock, return False.
@@ -318,7 +319,7 @@ class Repository:
                     **self._cli_options,
                     environment=environment,
                 )
-        except subprocess.CalledProcessError:
+        except LoggedCommandFailedError:
             return False
 
         return True
