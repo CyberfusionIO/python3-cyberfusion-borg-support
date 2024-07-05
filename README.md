@@ -36,11 +36,13 @@ No configuration is supported.
 ## Example
 
 ```python
+import os
+
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.BorgSupport.archives import Archive
 
-repository = Repository(path="/home/example/repository", passphrase_file="/home/example/.passphrase.txt", identity_file_path="/home/example/.ssh/id_rsa", create_if_not_exists=True)
-archive = Archive(repository=repository, name="example", comment="Example", working_directory=os.path.sep, remove_paths_if_file=True)
+repository = Repository(path="/home/example/repository", passphrase="test", identity_file_path=None, create_if_not_exists=True)
+archive = Archive(repository=repository, name="example", comment="Example")
 ```
 
 # Tests

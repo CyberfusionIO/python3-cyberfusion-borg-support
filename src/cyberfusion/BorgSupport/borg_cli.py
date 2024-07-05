@@ -7,6 +7,10 @@ import json
 import subprocess
 from typing import Dict, List, Optional
 
+from cyberfusion.BorgSupport.exceptions import (
+    LoggedCommandFailedError,
+    RegularCommandFailedError,
+)
 from cyberfusion.BorgSupport.utilities import find_executable, get_tmp_file
 
 
@@ -90,14 +94,21 @@ class BorgRegularCommand:
         if not run:
             return
 
-        output = subprocess.run(
-            self.command,
-            env=environment,
-            check=True,
-            stdout=subprocess.PIPE,
-            text=True,
-            stderr=subprocess.PIPE if capture_stderr else None,
-        )
+        try:
+            output = subprocess.run(
+                self.command,
+                env=environment,
+                check=True,
+                stdout=subprocess.PIPE,
+                text=True,
+                stderr=subprocess.PIPE if capture_stderr else None,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RegularCommandFailedError(
+                command=self.command,
+                stderr=e.stderr,
+                return_code=e.returncode,
+            )
 
         # Set attributes
 
@@ -157,13 +168,20 @@ class BorgLoggedCommand:
         # Execute command
 
         with open(self.file, "w") as f:
-            subprocess.run(
-                self.command,
-                env=environment,
-                cwd=working_directory,
-                check=True,
-                # Write to file so that callers can pass this to 'Operation'
-                # as 'progress_file'. Also, stderr should be written to file
-                # as output can be extremely large, mostly with SUBCOMMAND_CHECK.
-                stderr=f,
-            )
+            try:
+                subprocess.run(
+                    self.command,
+                    env=environment,
+                    cwd=working_directory,
+                    check=True,
+                    # Write to file so that callers can pass this to 'Operation'
+                    # as 'progress_file'. Also, stderr should be written to file
+                    # as output can be extremely large, mostly with SUBCOMMAND_CHECK.
+                    stderr=f,
+                )
+            except subprocess.CalledProcessError as e:
+                raise LoggedCommandFailedError(
+                    command=self.command,
+                    output_file_path=self.file,
+                    return_code=e.returncode,
+                )
