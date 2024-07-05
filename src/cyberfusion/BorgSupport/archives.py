@@ -16,7 +16,10 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
 )
-from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
+from cyberfusion.BorgSupport.exceptions import (
+    PathNotExistsError,
+    RepositoryLockedError,
+)
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.utilities import (
     generate_random_string,
@@ -220,7 +223,7 @@ class Archive:
         If 'recursive' is True, all contents from the given path, including
         those in subdirectories, are returned. This is the default behaviour
         by Borg. If 'recursive' is False, only the contents in the given path
-        and the filesystem object of the path itself are returned.
+        and the filesystem object of that path itself are returned.
 
         Contents are filesystem objects, i.e. directories and files.
         """
@@ -246,7 +249,14 @@ class Archive:
                 environment=environment,
             )
 
-        for _line in command.stdout.splitlines():
+        lines = command.stdout.splitlines()
+
+        if (
+            lines == []
+        ):  # See https://github.com/borgbackup/borg/discussions/8273
+            raise PathNotExistsError
+
+        for _line in lines:
             line = json.loads(_line)
 
             # If not recursive, skip if the path of this filesystem object is
