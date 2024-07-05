@@ -57,3 +57,9 @@ class RegularCommandFailedError(CommandFailedError):
     def __str__(self) -> str:
         """Get string representation."""
         return f"Command '{self.command}' failed with RC {self.return_code}. Stderr:\n\n{self.stderr}"
+
+
+class PathNotExistsError(Exception):
+    """Exception to raise when path doesn't exist."""
+
+    pass

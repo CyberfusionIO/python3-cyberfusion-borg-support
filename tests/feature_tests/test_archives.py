@@ -9,7 +9,10 @@ import pytest
 from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport.archives import Archive, UNIXFileType
-from cyberfusion.BorgSupport.exceptions import RepositoryLockedError
+from cyberfusion.BorgSupport.exceptions import (
+    PathNotExistsError,
+    RepositoryLockedError,
+)
 from cyberfusion.BorgSupport.operations import Operation
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.BorgSupport.utilities import generate_random_string
@@ -419,3 +422,11 @@ def test_archive_contents_not_recursive(
 
     assert contents[2].type_ == UNIXFileType.DIRECTORY
     assert contents[2].path == f"{dir1}/testdir"
+
+
+def test_archive_contents_path_not_exists(
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    with pytest.raises(PathNotExistsError):
+        archives[0].contents(path="doesntexist")
