@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.5.2) unstable; urgency=low
+
+  - Add Repository.get_archive
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 05 Jul 2024 19:25:00 +0200
+
 python3-cyberfusion-borg-support (1.5.1) unstable; urgency=low
 
   - Raise error when `Archive.contents(path=...)` doesn't exist

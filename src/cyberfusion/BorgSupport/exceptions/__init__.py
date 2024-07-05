@@ -63,3 +63,9 @@ class PathNotExistsError(Exception):
     """Exception to raise when path doesn't exist."""
 
     pass
+
+
+class ArchiveNotExistsError(Exception):
+    """Exception to raise when archive doesn't exist."""
+
+    pass

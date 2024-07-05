@@ -13,6 +13,7 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.exceptions import (
+    ArchiveNotExistsError,
     LoggedCommandFailedError,
     RegularCommandFailedError,
     RepositoryLockedError,
@@ -265,6 +266,16 @@ class Repository:
         # RC is 0, so there was no lock
 
         return False
+
+    def get_archive(self, name: str) -> Archive:
+        """Get archive by name."""
+        for archive in self.archives():
+            if archive.name != name:
+                continue
+
+            return archive
+
+        raise ArchiveNotExistsError
 
     def archives(self) -> List[Archive]:
         """Get archives in repository."""
