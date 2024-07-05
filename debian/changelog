@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.5) unstable; urgency=low
+
+  - Raise custom exceptions when command failed
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 05 Jul 2024 18:16:00 +0200
+
 python3-cyberfusion-borg-support (1.4.1) unstable; urgency=low
 
   - Drop dependency on Common
