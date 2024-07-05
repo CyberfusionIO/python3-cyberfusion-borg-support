@@ -8,6 +8,7 @@ from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 from cyberfusion.BorgSupport.archives import Archive
 from cyberfusion.BorgSupport.borg_cli import BorgCommand
 from cyberfusion.BorgSupport.exceptions import (
+    ArchiveNotExistsError,
     LoggedCommandFailedError,
     RegularCommandFailedError,
     RepositoryLockedError,
@@ -22,6 +23,25 @@ def test_repository_attributes(
 ) -> None:
     assert repository.passphrase == passphrase
     assert repository.identity_file_path is None
+
+
+def test_repository_get_archive(
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    archive = repository_init.archives()[0]
+
+    assert repository_init.get_archive(archive.name).name == archive.name
+
+
+def test_repository_get_archive_not_exists(
+    repository_init: Generator[Repository, None, None],
+    archives: Generator[List[Archive], None, None],
+    workspace_directory: Generator[str, None, None],
+) -> None:
+    with pytest.raises(ArchiveNotExistsError):
+        assert repository_init.get_archive("doesntexist")
 
 
 def test_repository_archives(
