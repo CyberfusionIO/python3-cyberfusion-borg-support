@@ -5,33 +5,33 @@ from typing import List
 
 
 class RepositoryLockedError(Exception):
-    """Exception to raise if repository is locked."""
+    """Repository is locked."""
 
     pass
 
 
 class RepositoryPathInvalidError(Exception):
-    """Exception to raise if repository path is not supported by this library."""
+    """Repository path is not supported by this library."""
 
     pass
 
 
 class OperationLineNotImplementedError(Exception):
-    """Exception to raise if line in operation progress file is not supported by this library."""
+    """Line in operation progress file is not supported by this library."""
 
     pass
 
 
 @dataclass
 class ExecutableNotFoundError(Exception):
-    """Exception to raise when executable was not found."""
+    """Executable was not found."""
 
     name: str
 
 
 @dataclass
 class CommandFailedError(Exception):
-    """Exception to raise when command failed."""
+    """Command failed."""
 
     return_code: int
     command: List[str]
@@ -39,7 +39,7 @@ class CommandFailedError(Exception):
 
 @dataclass
 class LoggedCommandFailedError(CommandFailedError):
-    """Exception to raise when logged command failed."""
+    """Logged command failed."""
 
     output_file_path: str
 
@@ -50,7 +50,7 @@ class LoggedCommandFailedError(CommandFailedError):
 
 @dataclass
 class RegularCommandFailedError(CommandFailedError):
-    """Exception to raise when regular command failed."""
+    """Regular command failed."""
 
     stderr: str
 
@@ -60,12 +60,12 @@ class RegularCommandFailedError(CommandFailedError):
 
 
 class PathNotExistsError(Exception):
-    """Exception to raise when path doesn't exist."""
+    """Path doesn't exist."""
 
     pass
 
 
 class ArchiveNotExistsError(Exception):
-    """Exception to raise when archive doesn't exist."""
+    """Archive doesn't exist."""
 
     pass
