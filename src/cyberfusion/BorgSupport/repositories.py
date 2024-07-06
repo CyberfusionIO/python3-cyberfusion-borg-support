@@ -352,7 +352,7 @@ class Repository:
 
         # Get archives before prune
 
-        before_archives_names = [a._name for a in self.archives()]
+        before_archives_names = [a.name for a in self.archives()]
 
         # Construct arguments
 
@@ -390,7 +390,7 @@ class Repository:
 
         # Get archives after prune
 
-        after_archives_names = [a._name for a in self.archives()]
+        after_archives_names = [a.name for a in self.archives()]
 
         # Get removed archives (in before list, not in after list)
         #
