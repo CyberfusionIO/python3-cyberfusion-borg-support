@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.5.3) unstable; urgency=low
+
+  - Rename Archive._name to Archive.name + Archive.name to Archive.full_name
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 05 Jul 2024 20:46:00 +0200
+
 python3-cyberfusion-borg-support (1.5.2) unstable; urgency=low
 
   - Add Repository.get_archive
