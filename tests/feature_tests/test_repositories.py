@@ -52,10 +52,10 @@ def test_repository_archives(
     assert len(repository_init.archives()) == 1
 
     assert archives[0].repository == repository_init
-    assert archives[0]._name == "test"
+    assert archives[0].name == "test"
     assert archives[0]._comment == "Free-form comment!"
     assert (
-        archives[0].name
+        archives[0].full_name
         == os.path.join(workspace_directory, "repository2") + "::test"
     )
     assert archives[0].comment == "Free-form comment!"
@@ -530,17 +530,17 @@ def test_repository_prune(
     )
 
     assert all(
-        a._name in ["prunetest1", "prunetest2", "prunetest3"]
+        a.name in ["prunetest1", "prunetest2", "prunetest3"]
         for a in repository_init.archives()
     )
 
     assert repository_init.prune(keep_last=1) == ["prunetest1", "prunetest2"]
 
     assert all(
-        a._name not in ["prunetest1", "prunetest2"]
+        a.name not in ["prunetest1", "prunetest2"]
         for a in repository_init.archives()
     )
-    assert all(a._name in ["prunetest3"] for a in repository_init.archives())
+    assert all(a.name in ["prunetest3"] for a in repository_init.archives())
 
 
 def test_repository_prune_keep_last(

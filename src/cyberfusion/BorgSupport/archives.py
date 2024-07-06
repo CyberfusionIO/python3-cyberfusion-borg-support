@@ -192,16 +192,16 @@ class Archive:
         """Set variables."""
         self.repository = repository
 
-        self._name = name
+        self.name = name
         self._comment = comment
 
     @property
-    def name(self) -> str:
+    def full_name(self) -> str:
         """Get archive name with repository path.
 
         Borg needs this format to identify the repository and archive.
         """
-        return self.repository.path + "::" + self._name
+        return self.repository.path + "::" + self.name
 
     @property
     def comment(self) -> str:
@@ -230,7 +230,7 @@ class Archive:
 
         # Construct arguments
 
-        arguments = ["--json-lines", self.name]
+        arguments = ["--json-lines", self.full_name]
 
         if path:
             arguments.append(path)
@@ -318,7 +318,7 @@ class Archive:
         for exclude in excludes:
             arguments.extend(["--exclude", exclude])
 
-        arguments.append(self.name)
+        arguments.append(self.full_name)
         arguments.extend(paths)
 
         # Execute command
@@ -366,7 +366,7 @@ class Archive:
         if strip_components:
             arguments.append(f"--strip-components={strip_components}")
 
-        arguments.append(self.name)
+        arguments.append(self.full_name)
         arguments.extend(restore_paths)
 
         # Create directory with correct permissions
@@ -407,7 +407,7 @@ class Archive:
 
         arguments = [
             f"--strip-components={strip_components}",
-            self.name,
+            self.full_name,
             destination_path,
         ]
         arguments.extend(restore_paths)
