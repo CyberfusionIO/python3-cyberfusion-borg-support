@@ -44,6 +44,20 @@ def test_repository_get_archive_not_exists(
         assert repository_init.get_archive("doesntexist")
 
 
+def test_repository_archives_locked(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    mocker.patch(
+        "cyberfusion.BorgSupport.repositories.Repository.is_locked",
+        return_value=True,
+    )
+
+    with pytest.raises(RepositoryLockedError):
+        repository_init.archives()
+
+    mocker.stopall()  # Unlock for teardown
+
+
 def test_repository_archives(
     repository_init: Generator[Repository, None, None],
     archives: Generator[List[Archive], None, None],

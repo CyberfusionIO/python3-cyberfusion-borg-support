@@ -277,6 +277,7 @@ class Repository:
 
         raise ArchiveNotExistsError
 
+    @check_repository_not_locked
     def archives(self) -> List[Archive]:
         """Get archives in repository."""
         results = []

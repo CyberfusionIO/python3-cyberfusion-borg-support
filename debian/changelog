@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.5.3.1) unstable; urgency=low
+
+  - Check if repository is locked on Repository.archives()
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Sun, 07 Jul 2024 00:30:00 +0200
+
 python3-cyberfusion-borg-support (1.5.3) unstable; urgency=low
 
   - Rename Archive._name to Archive.name + Archive.name to Archive.full_name
