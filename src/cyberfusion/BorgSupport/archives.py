@@ -468,7 +468,6 @@ class ArchiveRestoration:
         archive: Archive,
         path: str,
         temporary_path_root_path: str,
-        enforce_home_directory: bool = False,
     ):
         """Set attributes."""
         if not path.startswith(os.path.sep):
@@ -476,74 +475,14 @@ class ArchiveRestoration:
 
         self.archive = archive
         self._path = path
-        self._enforce_home_directory = enforce_home_directory
         self.filesystem_path = self._path
+        self.temporary_path_root_path = temporary_path_root_path
 
-        self._check_type()
-        self.temporary_path = self._create_temporary_path(
-            root_path=temporary_path_root_path
-        )
-
-    def _check_type(self) -> None:
-        """Raise exception if type of filesystem object is not supported."""
-        if self.type_ in [UNIXFileType.DIRECTORY, UNIXFileType.REGULAR_FILE]:
-            return
-
-        raise NotImplementedError
-
-    @property
-    def type_(self) -> UNIXFileType:
-        """Set type of filesystem object at path."""
-        return next(  # Raises StopIteration if no results
-            filter(
-                lambda x: x.path == self.archive_path,
-                self.archive.contents(path=self.archive_path),
-            )
-        ).type_
-
-    @property
-    def filesystem_path(self) -> str:
-        """Set filesystem path.
-
-        Path on local filesystem is absolute, so is path with leading slash. See
-        docstring for more information.
-        """
-        return self._filesystem_path
-
-    @filesystem_path.setter
-    def filesystem_path(self, value: str) -> None:
-        """Set filesystem path.
-
-        Checks if filesystem path is in user home directory.
-        Path is 1) the path that is restored from the archive and 2) the
-        restore destination on the local filesystem. Restoring an arbitrary
-        path from the archive is relatively safe, as it should never contain
-        paths other than those owned by the user. Nonetheless, it's not neat
-        to be able to restore to an arbitrary path on the local filesystem.
-        Therefore, we explicitly check if the path is in the home directory
-        of the user executing this script.
-        """
-        if (
-            self._enforce_home_directory
-            and Path.home() not in PosixPath(value).parents
-        ):
-            raise ValueError("Path must be in user home directory")
-
-        self._filesystem_path = value
-
-    @property
-    def archive_path(self) -> str:
-        """Set archive path.
-
-        Path in archive is relative, so is path without leading slash. See docstring
-        for more information.
-        """
-        return os.path.relpath(self._path, os.path.sep)
-
-    def _create_temporary_path(self, *, root_path: str) -> str:
+    @cached_property
+    def temporary_path(self) -> str:
         """Generate and create temporary path."""
         temporary_path = os.path.join(
-            root_path,
+            self.temporary_path_root_path,
             self.PREFIX_RESTORE_FILESYSTEM_OBJECT
             + "tmp."
             + os.path.basename(self.filesystem_path)
@@ -555,6 +494,36 @@ class ArchiveRestoration:
         os.chmod(temporary_path, 0o700)
 
         return temporary_path
+
+    def _check_type(self) -> None:
+        """Raise exception if type of filesystem object is not supported."""
+        if self.type_ in [UNIXFileType.DIRECTORY, UNIXFileType.REGULAR_FILE]:
+            return
+
+        raise NotImplementedError
+
+    @property
+    def type_(self) -> UNIXFileType:
+        """Set type of filesystem object at path."""
+        contents = self.archive.contents(path=self.archive_path)
+
+        content = next(  # Get path itself, not any of its children
+            filter(
+                lambda x: x.path == self.archive_path,
+                contents,
+            )
+        )
+
+        return content.type_
+
+    @property
+    def archive_path(self) -> str:
+        """Set archive path.
+
+        Path in archive is relative, so is path without leading slash. See docstring
+        for more information.
+        """
+        return os.path.relpath(self._path, os.path.sep)
 
     @cached_property
     def old_path(self) -> str:
@@ -609,6 +578,7 @@ class ArchiveRestoration:
         This is a nearly atomic process. I.e. there is almost no downtime when
         replacing.
         """
+        self._check_type()
 
         # Extract archive. The filesystem path remains untouched until this is
         # completed. This ensures that the filesystem is not left in a broken

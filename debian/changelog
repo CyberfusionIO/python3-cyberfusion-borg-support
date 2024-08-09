@@ -1,3 +1,10 @@
+python3-cyberfusion-borg-support (1.5.4) unstable; urgency=low
+
+  - Prevent side effects on ArchiveRestoration init
+  - Remove filesystem path check
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 09 Aug 2024 21:32:00 +0200
+
 python3-cyberfusion-borg-support (1.5.3.1) unstable; urgency=low
 
   - Check if repository is locked on Repository.archives()
