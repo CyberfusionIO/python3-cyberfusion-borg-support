@@ -61,14 +61,14 @@ def test_archive_restoration_path_unsupported_type(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ):
+    archive_restoration = ArchiveRestoration(
+        archive=archives[0],
+        path=os.path.join(workspace_directory, "backmeupdir2", "symlink.txt"),
+        temporary_path_root_path=workspace_directory,
+    )
+
     with pytest.raises(NotImplementedError):
-        ArchiveRestoration(
-            archive=archives[0],
-            path=os.path.join(
-                workspace_directory, "backmeupdir2", "symlink.txt"
-            ),
-            temporary_path_root_path=workspace_directory,
-        )
+        archive_restoration.replace()
 
 
 def test_archive_restoration_directory_attributes(
@@ -89,7 +89,7 @@ def test_archive_restoration_directory_attributes(
 
     assert archive_restoration.archive == archives[0]
     assert archive_restoration._path == dir2_with_leading_slash
-    assert not archive_restoration._enforce_home_directory
+    assert os.path.isdir(archive_restoration.temporary_path_root_path)
     assert archive_restoration.temporary_path.startswith(
         f"{workspace_directory}/.archive-restore-tmp.backmeupdir2-"
     )
@@ -127,8 +127,8 @@ def test_archive_restoration_regular_file_attributes(
     )
 
     assert archive_restoration.archive == archives[0]
+    assert os.path.isdir(archive_restoration.temporary_path_root_path)
     assert archive_restoration._path == file_with_leading_slash
-    assert not archive_restoration._enforce_home_directory
     assert archive_restoration.temporary_path.startswith(
         f"{workspace_directory}/.archive-restore-tmp.test2.txt-"
     )
@@ -153,22 +153,6 @@ def test_archive_restoration_regular_file_attributes(
 
     assert os.path.isdir(archive_restoration.temporary_path)
     assert os.stat(archive_restoration.temporary_path).st_mode == 16832
-
-
-def test_archive_restoration_path_not_in_home_directory(
-    repository_init: Generator[Repository, None, None],
-    archives: Generator[List[Archive], None, None],
-    workspace_directory: Generator[str, None, None],
-):
-    dir2_with_leading_slash = os.path.join(workspace_directory, "backmeupdir2")
-
-    with pytest.raises(ValueError):
-        ArchiveRestoration(
-            archive=archives[0],
-            path=dir2_with_leading_slash,
-            enforce_home_directory=True,
-            temporary_path_root_path=workspace_directory,
-        )
 
 
 def test_archive_restoration_restore_regular_file_not_exists(

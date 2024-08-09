@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="python3-cyberfusion-borg-support",
-    version="1.5.3.1",
+    version="1.5.4",
     description="Library for Borg.",
     long_description=long_description,
     long_description_content_type="text/markdown",
