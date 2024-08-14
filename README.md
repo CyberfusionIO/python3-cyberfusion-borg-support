@@ -44,11 +44,3 @@ from cyberfusion.BorgSupport.archives import Archive
 repository = Repository(path="/home/example/repository", passphrase="test", identity_file_path=None, create_if_not_exists=True)
 archive = Archive(repository=repository, name="example", comment="Example")
 ```
-
-# Tests
-
-Run tests with pytest:
-
-    pytest tests/
-
-The tests must be run from the project root.
