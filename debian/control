@@ -7,6 +7,6 @@ Standards-Version: 4.3.0
 
 Package: python3-cyberfusion-borg-support
 Architecture: all
-Depends: python3, python3-cached-property, borgbackup, ${misc:Depends}
+Depends: python3, borgbackup, ${python3:Depends}, ${misc:Depends}
 Description: Library for Borg.
  Library for Borg.

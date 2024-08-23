@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.5.4.1) unstable; urgency=low
+
+  - Replace dh_make with modern pybuild / dh_python3 + add pydist
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 23 Aug 2024 10:39:00 +0200
+
 python3-cyberfusion-borg-support (1.5.4) unstable; urgency=low
 
   - Prevent side effects on ArchiveRestoration init
