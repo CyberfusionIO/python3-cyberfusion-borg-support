@@ -20,11 +20,11 @@ unit test and feature test:
   image: python:3.11
   script:
     - !reference [.add repositories, script]
-    - apt-get -y install python3-cyberfusion-common python3-cached-property
     - apt-get update
     - apt-get -y install borgbackup
     - pip install --no-cache-dir -r requirements/test.txt
-    - PYTHONPATH=$CI_PROJECT_DIR/src:/usr/lib/python3/dist-packages pytest -n 10 -vvv --cov-branch --cov=cyberfusion.BorgSupport --cov-config=.coveragerc --cov-fail-under=100 --junitxml=report-pytest.xml
+    - pip install .
+    - pytest -n 10 -vvv --cov-branch --cov=cyberfusion.BorgSupport --cov-config=.coveragerc --cov-fail-under=100 --junitxml=report-pytest.xml
   artifacts:
     reports:
       junit: report-*.xml
