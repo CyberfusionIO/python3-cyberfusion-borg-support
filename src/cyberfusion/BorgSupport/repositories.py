@@ -171,8 +171,7 @@ class Repository:
                 command=BorgCommand.SUBCOMMAND_DELETE,
                 arguments=arguments,
                 **self._cli_options,
-                environment=environment
-                | {"BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES"},
+                environment=environment | {"BORG_DELETE_I_KNOW_WHAT_I_AM_DOING": "YES"},
             )
 
     @property
@@ -204,17 +203,12 @@ class Repository:
 
             # Directory exists, but does not contain repository
 
-            if (
-                f"{self.path} is not a valid repository. Check repo config."
-                in lines
-            ):
+            if f"{self.path} is not a valid repository. Check repo config." in lines:
                 return False
 
             # Repository exists, but is locked
 
-            if any(
-                line.startswith(MESSAGE_FAILED_ACQUIRE_LOCK) for line in lines
-            ):
+            if any(line.startswith(MESSAGE_FAILED_ACQUIRE_LOCK) for line in lines):
                 return True
 
             # Unexpected error occurred

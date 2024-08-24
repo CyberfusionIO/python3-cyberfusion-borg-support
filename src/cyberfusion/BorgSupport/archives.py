@@ -251,9 +251,7 @@ class Archive:
 
         lines = command.stdout.splitlines()
 
-        if (
-            lines == []
-        ):  # See https://github.com/borgbackup/borg/discussions/8273
+        if lines == []:  # See https://github.com/borgbackup/borg/discussions/8273
             raise PathNotExistsError
 
         for _line in lines:
@@ -595,9 +593,7 @@ class ArchiveRestoration:
         # new directory first.
 
         shutil.move(
-            os.path.join(
-                self.temporary_path, os.path.basename(self.archive_path)
-            ),
+            os.path.join(self.temporary_path, os.path.basename(self.archive_path)),
             self.new_path,
         )
 

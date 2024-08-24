@@ -1,5 +1,4 @@
 import os
-import shutil
 import stat
 import tarfile
 from pathlib import Path
@@ -56,9 +55,7 @@ def test_archive_create_paths_removed(
         repository=repository_init, name="test", comment="Free-form comment!"
     )
 
-    archive.create(
-        paths=[path1, path2], excludes=[], remove_paths_if_file=True
-    )
+    archive.create(paths=[path1, path2], excludes=[], remove_paths_if_file=True)
 
     assert not os.path.isfile(path1)
     assert os.path.isdir(path2)
@@ -69,16 +66,10 @@ def test_archive_extract(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
-    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[len(os.path.sep) :]
 
-    _destination_path = os.path.join(
-        workspace_directory, generate_random_string()
-    )
+    _destination_path = os.path.join(workspace_directory, generate_random_string())
 
     # Extract archive
 
@@ -96,14 +87,10 @@ def test_archive_extract(
 
     assert open(f"{_destination_path}/{dir1}/test1.txt", "r").read() == "Hi! 1"
     assert os.path.isdir(f"{_destination_path}/{dir1}/testdir")
-    assert (
-        open(f"{_destination_path}/{dir1}/testdir/test3.txt", "r").read()
-        == "Hi! 3"
-    )
+    assert open(f"{_destination_path}/{dir1}/testdir/test3.txt", "r").read() == "Hi! 3"
     assert open(f"{_destination_path}/{dir2}/test2.txt", "r").read() == "Hi! 2"
     assert (
-        os.readlink(f"{_destination_path}/{dir2}/symlink.txt")
-        == f"/{dir2}/test2.txt"
+        os.readlink(f"{_destination_path}/{dir2}/symlink.txt") == f"/{dir2}/test2.txt"
     )
     assert not os.path.exists(f"{_destination_path}/{dir1}/pleaseexcludeme")
 
@@ -113,16 +100,10 @@ def test_archive_extract_directory_not_exists(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
-    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[len(os.path.sep) :]
 
-    _destination_path = os.path.join(
-        workspace_directory, generate_random_string()
-    )
+    _destination_path = os.path.join(workspace_directory, generate_random_string())
 
     assert not os.path.isdir(_destination_path)
 
@@ -140,16 +121,10 @@ def test_archive_extract_directory_exists(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
-    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[len(os.path.sep) :]
 
-    _destination_path = os.path.join(
-        workspace_directory, generate_random_string()
-    )
+    _destination_path = os.path.join(workspace_directory, generate_random_string())
 
     os.mkdir(_destination_path)
     os.chmod(_destination_path, 0o755)
@@ -160,9 +135,7 @@ def test_archive_extract_directory_exists(
     )
 
     assert os.path.isdir(destination_path)
-    assert (
-        stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o755
-    )  # Unchanged
+    assert stat.S_IMODE(os.lstat(destination_path).st_mode) == 0o755  # Unchanged
 
 
 def test_archive_export_tar_locked(
@@ -189,12 +162,8 @@ def test_archive_export_tar(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
-    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[len(os.path.sep) :]
 
     path = f"{workspace_directory}/mytar.tar.gz"
 
@@ -272,12 +241,8 @@ def test_archive_contents_without_path(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
-    dir2 = os.path.join(workspace_directory, "backmeupdir2")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
+    dir2 = os.path.join(workspace_directory, "backmeupdir2")[len(os.path.sep) :]
 
     contents = archives[0].contents(path=None)
 
@@ -366,9 +331,7 @@ def test_archive_contents_with_path(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
 
     # Test archive contents from directory
 
@@ -402,9 +365,7 @@ def test_archive_contents_not_recursive(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ) -> None:
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
 
     contents = archives[0].contents(path=dir1, recursive=False)
 

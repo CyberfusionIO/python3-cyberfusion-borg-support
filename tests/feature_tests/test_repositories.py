@@ -1,5 +1,4 @@
 import os
-import subprocess
 from typing import Dict, Generator, List, Optional
 
 import pytest
@@ -76,7 +75,7 @@ def test_repository_archives(
 
 
 def test_repository_not_exists_directory_exists(
-    repository: Generator[Repository, None, None]
+    repository: Generator[Repository, None, None],
 ) -> None:
     os.mkdir(repository.path)
 
@@ -84,14 +83,12 @@ def test_repository_not_exists_directory_exists(
 
 
 def test_repository_not_exists_directory_not_exists(
-    repository: Generator[Repository, None, None]
+    repository: Generator[Repository, None, None],
 ) -> None:
     assert not repository.exists
 
 
-def test_repository_exists(
-    repository_init: Generator[Repository, None, None]
-) -> None:
+def test_repository_exists(repository_init: Generator[Repository, None, None]) -> None:
     assert repository_init.exists
 
 
@@ -175,7 +172,7 @@ def test_repository_exists_locked(
 
 
 def test_repository_not_locked(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     assert not repository_init.is_locked
 
@@ -384,9 +381,7 @@ def test_repository_not_locked_line_msgid(
 def test_repository_attributes_remote_without_scheme(
     passphrase: Generator[str, None, None],
 ) -> None:
-    repository = Repository(
-        path="user@host:/path/to/repo", passphrase=passphrase
-    )
+    repository = Repository(path="user@host:/path/to/repo", passphrase=passphrase)
 
     with pytest.raises(RepositoryPathInvalidError):
         repository.path
@@ -416,7 +411,7 @@ def test_repository_attributes_local(
 
 
 def test_repository_init_already_exists(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     with pytest.raises(RegularCommandFailedError):
         repository_init.create(encryption="keyfile-blake2")
@@ -451,7 +446,7 @@ def test_repository_check_locked(
 
 
 def test_repository_check_has_integrity(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     assert repository_init.check()
 
@@ -551,44 +546,43 @@ def test_repository_prune(
     assert repository_init.prune(keep_last=1) == ["prunetest1", "prunetest2"]
 
     assert all(
-        a.name not in ["prunetest1", "prunetest2"]
-        for a in repository_init.archives()
+        a.name not in ["prunetest1", "prunetest2"] for a in repository_init.archives()
     )
     assert all(a.name in ["prunetest3"] for a in repository_init.archives())
 
 
 def test_repository_prune_keep_last(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_last=1)
 
 
 def test_repository_prune_keep_hourly(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_hourly=1)
 
 
 def test_repository_prune_keep_daily(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_daily=1)
 
 
 def test_repository_prune_keep_weekly(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_weekly=1)
 
 
 def test_repository_prune_keep_monthly(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_monthly=1)
 
 
 def test_repository_prune_keep_yearly(
-    repository_init: Generator[Repository, None, None]
+    repository_init: Generator[Repository, None, None],
 ) -> None:
     repository_init.prune(keep_yearly=1)
 
@@ -653,7 +647,5 @@ def test_repository_compact_locked(
     mocker.stopall()  # Unlock for teardown
 
 
-def test_repository_compact(
-    repository_init: Generator[Repository, None, None]
-) -> None:
+def test_repository_compact(repository_init: Generator[Repository, None, None]) -> None:
     repository_init.compact()

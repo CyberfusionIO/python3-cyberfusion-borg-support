@@ -1,5 +1,3 @@
-from typing import Generator
-
 import pytest
 
 from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError

@@ -26,14 +26,14 @@ def test_passphrase_file_contents_before_enter(passphrase: str) -> None:
 def test_passphrase_file_contents_after_enter(passphrase: str) -> None:
     passphrase_file = PassphraseFile(passphrase=passphrase)
 
-    with passphrase_file as pf:
+    with passphrase_file:
         assert open(passphrase_file.path).read() == passphrase + "\n"
 
 
 def test_passphrase_file_not_exists_after_enter(passphrase: str) -> None:
     passphrase_file = PassphraseFile(passphrase=passphrase)
 
-    with passphrase_file as pf:
+    with passphrase_file:
         assert os.path.exists(passphrase_file.path)
 
     assert not os.path.exists(passphrase_file.path)
