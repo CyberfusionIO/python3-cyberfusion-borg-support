@@ -3,7 +3,6 @@ from copy import deepcopy
 from typing import Generator
 
 import pytest
-from pytest_mock import MockerFixture  # type: ignore[attr-defined]
 
 from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
@@ -57,8 +56,7 @@ def test_borg_logged_command_identity_file_path(
             run=False,
             command="create",
             arguments=[
-                os.path.join(workspace_directory, "repository2")
-                + "::testarchivename",
+                os.path.join(workspace_directory, "repository2") + "::testarchivename",
                 "/root",
             ],
             identity_file_path="/tmp/test.key",
@@ -102,8 +100,7 @@ def test_borg_logged_command_command_and_arguments(
         run=False,
         command="create",
         arguments=[
-            os.path.join(workspace_directory, "repository2")
-            + "::testarchivename",
+            os.path.join(workspace_directory, "repository2") + "::testarchivename",
             "/root",
         ],
         **repository_init._cli_options,
@@ -134,14 +131,14 @@ def test_borg_regular_command_json(
 def test_borg_regular_command_raises_exception(
     borg_regular_command: BorgRegularCommand,
 ) -> None:
-    with pytest.raises(RegularCommandFailedError) as e:
+    with pytest.raises(RegularCommandFailedError):
         borg_regular_command.execute(command="doesntexist")
 
 
 def test_borg_logged_command_raises_exception(
     borg_logged_command: BorgLoggedCommand,
 ) -> None:
-    with pytest.raises(LoggedCommandFailedError) as e:
+    with pytest.raises(LoggedCommandFailedError):
         borg_logged_command.execute(
             command="doesntexist",
             arguments=[],

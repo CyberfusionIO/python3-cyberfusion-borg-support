@@ -44,9 +44,7 @@ def test_archive_restoration_path_no_leading_slash(
     archives: Generator[List[Archive], None, None],
     workspace_directory: Generator[str, None, None],
 ):
-    dir1 = os.path.join(workspace_directory, "backmeupdir1")[
-        len(os.path.sep) :
-    ]
+    dir1 = os.path.join(workspace_directory, "backmeupdir1")[len(os.path.sep) :]
 
     with pytest.raises(ValueError):
         ArchiveRestoration(
@@ -77,9 +75,9 @@ def test_archive_restoration_directory_attributes(
     workspace_directory: Generator[str, None, None],
 ):
     dir2_with_leading_slash = os.path.join(workspace_directory, "backmeupdir2")
-    dir2_without_leading_slash = os.path.join(
-        workspace_directory, "backmeupdir2"
-    )[len(os.path.sep) :]
+    dir2_without_leading_slash = os.path.join(workspace_directory, "backmeupdir2")[
+        len(os.path.sep) :
+    ]
 
     archive_restoration = ArchiveRestoration(
         archive=archives[0],
@@ -228,9 +226,7 @@ def test_archive_restoration_restore_regular_file_exists(
     assert spy_rename.call_args_list[-1] == mocker.call(
         archive_restoration.new_path, archive_restoration.filesystem_path
     )
-    assert spy_unlink.call_args_list[-1] == mocker.call(
-        archive_restoration.old_path
-    )
+    assert spy_unlink.call_args_list[-1] == mocker.call(archive_restoration.old_path)
 
 
 def test_archive_restoration_restore_directory_not_exists(

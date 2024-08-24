@@ -12,15 +12,12 @@ from cyberfusion.BorgSupport.borg_cli import (
 from cyberfusion.BorgSupport.repositories import Repository
 from cyberfusion.BorgSupport.utilities import (
     generate_random_string,
-    get_tmp_file,
 )
 
 
 @pytest.fixture
 def workspace_directory() -> Generator[str, None, None]:
-    path = os.path.join(
-        os.path.sep, "tmp", "borg-" + generate_random_string().lower()
-    )
+    path = os.path.join(os.path.sep, "tmp", "borg-" + generate_random_string().lower())
 
     os.mkdir(path)
 
@@ -66,7 +63,7 @@ def repository_init(
 
 @pytest.fixture
 def dummy_files(
-    workspace_directory: Generator[str, None, None]
+    workspace_directory: Generator[str, None, None],
 ) -> Generator[None, None, None]:
     dir1 = os.path.join(workspace_directory, "backmeupdir1")
     dir2 = os.path.join(workspace_directory, "backmeupdir2")
@@ -118,11 +115,7 @@ def archives(
             os.path.join(workspace_directory, "backmeupdir1"),
             os.path.join(workspace_directory, "backmeupdir2"),
         ],  # Created by dummy_files fixture
-        excludes=[
-            os.path.join(
-                workspace_directory, "backmeupdir1", "pleaseexcludeme"
-            )
-        ],
+        excludes=[os.path.join(workspace_directory, "backmeupdir1", "pleaseexcludeme")],
     )
     archives.append(archive)
 

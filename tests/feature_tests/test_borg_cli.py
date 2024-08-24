@@ -1,15 +1,12 @@
 import os
-import subprocess
 from typing import Generator
 
-import pytest
 
 from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
     BorgLoggedCommand,
     BorgRegularCommand,
 )
-from cyberfusion.BorgSupport.exceptions import RegularCommandFailedError
 from cyberfusion.BorgSupport.repositories import Repository
 
 
@@ -51,8 +48,7 @@ def test_borg_logged_command_attributes(
         borg_logged_command.execute(
             command="create",
             arguments=[
-                os.path.join(workspace_directory, "repository2")
-                + "::testarchivename",
+                os.path.join(workspace_directory, "repository2") + "::testarchivename",
                 "/bin/sh",
             ],
             environment=environment,

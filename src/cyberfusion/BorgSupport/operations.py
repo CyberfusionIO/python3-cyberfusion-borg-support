@@ -72,17 +72,13 @@ class Operation:
 
     def get_lines(
         self,
-    ) -> List[
-        Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]
-    ]:
+    ) -> List[Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]]:
         """Get JSON lines from progress file.
 
         Each line is a JSON document, see https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#logging
         """
         lines: List[
-            Union[
-                ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine
-            ]
+            Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]
         ] = []
 
         with open(self.progress_file, "r") as f:
@@ -108,9 +104,7 @@ class Operation:
     @property
     def last_line(
         self,
-    ) -> Optional[
-        Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]
-    ]:
+    ) -> Optional[Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]]:
         """Get last JSON line from progress file.
 
         The last line contains the most recent status.
