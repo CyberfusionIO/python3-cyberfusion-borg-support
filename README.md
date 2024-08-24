@@ -4,14 +4,6 @@ Library for [Borg](https://www.borgbackup.org/).
 
 # Install
 
-## Generic
-
-Run the following command to create a source distribution:
-
-    python3 setup.py sdist
-
-Next, install Borg according to the [documentation](https://borgbackup.readthedocs.io/en/stable/installation.html#distribution-package).
-
 ## Debian
 
 Run the following commands to build a Debian package:
