@@ -198,12 +198,12 @@ class Repository:
 
             # Directory does not exist
 
-            if f"Repository {self.path} does not exist." in lines:
+            if any('does not exist' in line for line in lines):
                 return False
 
             # Directory exists, but does not contain repository
 
-            if f"{self.path} is not a valid repository. Check repo config." in lines:
+            if any('is not a valid repository. Check repo config.' in line for line in lines):
                 return False
 
             # Repository exists, but is locked
