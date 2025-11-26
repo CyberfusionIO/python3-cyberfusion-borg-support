@@ -1,8 +1,8 @@
-python3-cyberfusion-borg-support (1.5.5) UNRELEASED; urgency=low
+python3-cyberfusion-borg-support (1.5.5) unstable; urgency=low
 
   - Don't match list output literally
 
- -- William Edwards <wedwards@cyberfusion.nl>  Wed, 26 Nov 2025 04:10:00 +0200
+ -- William Edwards <wedwards@cyberfusion.nl>  Wed, 26 Nov 2025 16:18:00 +0200
 
 python3-cyberfusion-borg-support (1.5.4.2) unstable; urgency=low
 
