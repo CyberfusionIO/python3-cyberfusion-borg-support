@@ -4,15 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python3-cyberfusion-borg-support"
-version = "1.5.5"
+version = "1.6"
 description = "Library for Borg."
 readme = "README.md"
 authors = [
     { name = "Cyberfusion", email = "support@cyberfusion.io" },
 ]
-dependencies = [
-    "cached_property==1.5.2",
-]
+dependencies = []
 
 [project.urls]
 "Source" = "https://github.com/CyberfusionIO/python3-cyberfusion-borg-support"
