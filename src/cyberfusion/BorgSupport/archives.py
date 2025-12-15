@@ -8,7 +8,7 @@ from enum import Enum
 from pathlib import Path, PosixPath
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, TypeVar
 
-from cached_property import cached_property
+from functools import cached_property
 
 from cyberfusion.BorgSupport import PassphraseFile
 from cyberfusion.BorgSupport.borg_cli import (
