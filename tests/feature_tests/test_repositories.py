@@ -338,7 +338,7 @@ def test_repository_not_locked_line_type(
 def test_repository_not_locked_line_msgid(
     mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
-    """Test that repository is not marked as locked because of msgid in line."""
+    """Test that repository is not marked as locked because of `msgid` in line."""
 
     def execute_side_effect(
         *,

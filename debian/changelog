@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.6.1) unstable; urgency=low
+
+  - `Repository.is_locked`: deal with log lines without `msgid`
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 06 Feb 2026 18:27:00 +0200
+
 python3-cyberfusion-borg-support (1.6) unstable; urgency=low
 
   - Update to Trixie
