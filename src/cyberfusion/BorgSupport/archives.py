@@ -17,10 +17,15 @@ from cyberfusion.BorgSupport.borg_cli import (
     BorgRegularCommand,
 )
 from cyberfusion.BorgSupport.exceptions import (
+    LoggedCommandFailedError,
     PathNotExistsError,
     RepositoryLockedError,
 )
-from cyberfusion.BorgSupport.operations import Operation
+from cyberfusion.BorgSupport.operations import (
+    EXIT_CODE_MESSAGE_IDS,
+    MessageID,
+    Operation,
+)
 from cyberfusion.BorgSupport.utilities import (
     generate_random_string,
     get_md5_hash,
@@ -285,6 +290,7 @@ class Archive:
         excludes: List[str],
         working_directory: str = os.path.sep,
         remove_paths_if_file: bool = False,
+        strict: bool = False,
     ) -> Operation:
         """Create archive.
 
@@ -307,6 +313,10 @@ class Archive:
         > recursively traversing all paths specified. Paths are added to the
         > archive as they are given, that means if relative paths are desired,
         > the command has to be run from the correct directory.
+
+        When 'strict' is False (default), warnings that files were changed or
+        removed during the backup are swallowed, as they are expected on a live
+        system. When True, any non-zero Borg exit code is raised.
         """
 
         # Construct arguments
@@ -324,13 +334,25 @@ class Archive:
         command = BorgLoggedCommand()
 
         with PassphraseFile(self.repository.passphrase) as environment:
-            command.execute(
-                command=BorgCommand.SUBCOMMAND_CREATE,
-                arguments=arguments,
-                working_directory=working_directory,
-                **self.repository._cli_options,
-                environment=environment,
-            )
+            try:
+                command.execute(
+                    command=BorgCommand.SUBCOMMAND_CREATE,
+                    arguments=arguments,
+                    working_directory=working_directory,
+                    **self.repository._cli_options,
+                    environment=environment,
+                )
+            except LoggedCommandFailedError as e:
+                if strict:
+                    raise
+
+                message_id = EXIT_CODE_MESSAGE_IDS.get(e.return_code)
+
+                if message_id not in [
+                    MessageID.FILE_CHANGED_WARNING,
+                    MessageID.BACKUP_FILE_NOT_FOUND_ERROR,
+                ]:
+                    raise
 
         # Remove paths
 

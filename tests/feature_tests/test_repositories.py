@@ -155,8 +155,8 @@ def test_repository_exists_locked(
                     "list",
                     repository_init.path,
                 ],
-                stderr="Failed to create/acquire the lock /Users/williamedwards/borg/test/lock.exclusive (timeout).",
-                return_code=2,
+                stderr="",
+                return_code=73,  # LockTimeout
             )
 
         return mocker.DEFAULT
@@ -270,12 +270,11 @@ def test_repository_locked(
                 command=[
                     BorgCommand.BORG_BIN,
                     "with-lock",
-                    "--log-json",
                     repository_init.path,
                     "/bin/true",
                 ],
-                stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-                return_code=2,
+                stderr="",
+                return_code=73,  # LockTimeout
             )
 
         return mocker.DEFAULT
@@ -292,10 +291,10 @@ def test_repository_locked(
     mocker.stopall()  # Unlock for teardown
 
 
-def test_repository_not_locked_line_type(
+def test_repository_not_locked_non_lock_failure(
     mocker: MockerFixture, repository_init: Generator[Repository, None, None]
 ) -> None:
-    """Test that repository is not marked as locked because of type in line."""
+    """Test that a non-lock 'with-lock' failure is not reported as locked."""
 
     def execute_side_effect(
         *,
@@ -313,55 +312,11 @@ def test_repository_not_locked_line_type(
                 command=[
                     BorgCommand.BORG_BIN,
                     "with-lock",
-                    "--log-json",
                     repository_init.path,
                     "/bin/true",
                 ],
-                stderr='{"type": "progress_percent", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockTimeout"}',
-                return_code=2,
-            )
-
-        return mocker.DEFAULT
-
-    mocker.patch(
-        "cyberfusion.BorgSupport.borg_cli.BorgRegularCommand.execute",
-        side_effect=execute_side_effect,
-    )
-
-    result = repository_init.is_locked
-
-    assert result is False
-
-    mocker.stopall()  # Unlock for teardown
-
-
-def test_repository_not_locked_line_msgid(
-    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
-) -> None:
-    """Test that repository is not marked as locked because of `msgid` in line."""
-
-    def execute_side_effect(
-        *,
-        command: Optional[str],
-        arguments: Optional[List[str]] = None,
-        json_format: bool = False,
-        identity_file_path: Optional[str] = None,
-        environment: Optional[Dict[str, str]] = None,
-        run: bool = True,
-        capture_stderr: bool = False,
-    ) -> None:
-        """Raise exception if command is expected. Call original method otherwise."""
-        if command == "with-lock":
-            raise RegularCommandFailedError(
-                command=[
-                    BorgCommand.BORG_BIN,
-                    "with-lock",
-                    "--log-json",
-                    repository_init.path,
-                    "/bin/true",
-                ],
-                stderr='{"type": "log_message", "time": 1654268720.0201778, "message": "Failed to create/acquire the lock /Users/wedwards/repo/lock.exclusive (timeout).", "levelname": "ERROR", "name": "borg.archiver", "msgid": "LockError"}',
-                return_code=2,
+                stderr="",
+                return_code=2,  # generic Error, not LockTimeout
             )
 
         return mocker.DEFAULT
@@ -468,7 +423,7 @@ def test_repository_check_has_no_integrity(
         if command == "check":
             raise LoggedCommandFailedError(
                 command=[BorgCommand.BORG_BIN, "check", repository_init.path],
-                return_code=2,
+                return_code=1,  # BorgWarning: `borg check` found issues
                 output_file_path="/tmp/foobar.txt",
             )
 
@@ -482,6 +437,42 @@ def test_repository_check_has_no_integrity(
     result = repository_init.check()
 
     assert result is False
+
+    mocker.stopall()  # Unlock for teardown
+
+
+def test_repository_check_reraises_non_warning_failure(
+    mocker: MockerFixture, repository_init: Generator[Repository, None, None]
+) -> None:
+    """Test that check() only swallows BorgWarning; other rcs propagate."""
+
+    def execute_side_effect(
+        *,
+        command: Optional[str],
+        arguments: Optional[List[str]] = None,
+        json_format: bool = False,
+        identity_file_path: Optional[str] = None,
+        environment: Optional[Dict[str, str]] = None,
+        run: bool = True,
+        capture_stderr: bool = False,
+    ) -> None:
+        """Raise exception if command is expected. Call original method otherwise."""
+        if command == "check":
+            raise LoggedCommandFailedError(
+                command=[BorgCommand.BORG_BIN, "check", repository_init.path],
+                return_code=2,  # generic Error, not BorgWarning
+                output_file_path="/tmp/foobar.txt",
+            )
+
+        return mocker.DEFAULT
+
+    mocker.patch(
+        "cyberfusion.BorgSupport.borg_cli.BorgLoggedCommand.execute",
+        side_effect=execute_side_effect,
+    )
+
+    with pytest.raises(LoggedCommandFailedError):
+        repository_init.check()
 
     mocker.stopall()  # Unlock for teardown
 

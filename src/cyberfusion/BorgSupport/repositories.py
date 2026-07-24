@@ -1,6 +1,5 @@
 """Classes for managing repositories."""
 
-import json
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 from urllib.parse import urlparse
@@ -19,7 +18,7 @@ from cyberfusion.BorgSupport.exceptions import (
     RepositoryLockedError,
     RepositoryPathInvalidError,
 )
-from cyberfusion.BorgSupport.operations import JSONLineType, MessageID
+from cyberfusion.BorgSupport.operations import EXIT_CODE_MESSAGE_IDS, MessageID
 
 SCHEME_SSH = "ssh"
 DEFAULT_PORT_SSH = 22
@@ -182,8 +181,6 @@ class Repository:
         Therefore, we try getting archives. Inspired by:
         https://github.com/borgbackup/borg/issues/271#issuecomment-378091437
         """
-        MESSAGE_FAILED_ACQUIRE_LOCK = "Failed to create/acquire the lock"
-
         try:
             with PassphraseFile(self.passphrase) as environment:
                 BorgRegularCommand().execute(
@@ -194,24 +191,24 @@ class Repository:
                     environment=environment,
                 )
         except RegularCommandFailedError as e:
-            lines = e.stderr.splitlines()
+            message_id = EXIT_CODE_MESSAGE_IDS.get(e.return_code)
 
-            # Directory does not exist
+            # Directory does not exist, or directory exists but does not contain
+            # a (valid) repository
 
-            if any("does not exist" in line for line in lines):
-                return False
-
-            # Directory exists, but does not contain repository
-
-            if any(
-                "is not a valid repository. Check repo config." in line
-                for line in lines
-            ):
+            if message_id in {
+                MessageID.REPOSITORY_DOES_NOT_EXIST,
+                MessageID.REPOSITORY_INVALID_REPOSITORY,
+                MessageID.REPOSITORY_INVALID_REPOSITORY_CONFIG,
+            }:
                 return False
 
             # Repository exists, but is locked
 
-            if any(line.startswith(MESSAGE_FAILED_ACQUIRE_LOCK) for line in lines):
+            if message_id in {
+                MessageID.LOCK_TIMEOUT,
+                MessageID.LOCK_FAILED,
+            }:
                 return True
 
             # Unexpected error occurred
@@ -229,7 +226,7 @@ class Repository:
 
         # Construct arguments
 
-        arguments = ["--log-json", self.path, BorgCommand.TRUE_BIN]
+        arguments = [self.path, BorgCommand.TRUE_BIN]
 
         # Execute command
 
@@ -245,20 +242,7 @@ class Repository:
                     environment=environment,
                 )
         except RegularCommandFailedError as e:
-            # When RC is not 0, Borg will most likely have logged something. If
-            # any of these log lines say that the command failed because there
-            # was a lock, return False.
-
-            for line in e.stderr.splitlines():
-                line = json.loads(line)
-
-                if line["type"] != JSONLineType.LOG_MESSAGE.value:
-                    continue
-
-                if line.get("msgid", None) != MessageID.LOCK_TIMEOUT.value:
-                    continue
-
-                return True
+            return EXIT_CODE_MESSAGE_IDS.get(e.return_code) == MessageID.LOCK_TIMEOUT
 
         # RC is 0, so there was no lock
 
@@ -328,8 +312,11 @@ class Repository:
                     **self._cli_options,
                     environment=environment,
                 )
-        except LoggedCommandFailedError:
-            return False
+        except LoggedCommandFailedError as e:
+            if EXIT_CODE_MESSAGE_IDS.get(e.return_code) == MessageID.BORG_WARNING:
+                return False
+
+            raise
 
         return True
 
