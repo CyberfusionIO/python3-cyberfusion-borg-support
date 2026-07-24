@@ -5,6 +5,7 @@ Follow 'good and preferred' order at https://borgbackup.readthedocs.io/en/stable
 
 import json
 import subprocess
+from functools import cached_property
 from typing import Dict, List, Optional
 
 from cyberfusion.BorgSupport.exceptions import (
@@ -97,7 +98,7 @@ class BorgRegularCommand:
         try:
             output = subprocess.run(
                 self.command,
-                env=environment,
+                env={"BORG_EXIT_CODES": "modern", **(environment or {})},
                 check=True,
                 stdout=subprocess.PIPE,
                 text=True,
@@ -133,6 +134,10 @@ class BorgLoggedCommand:
         """Do nothing."""
         pass
 
+    @cached_property
+    def file(self) -> str:
+        return get_tmp_file()
+
     def execute(
         self,
         *,
@@ -150,8 +155,6 @@ class BorgLoggedCommand:
             "--log-json",
             command,
         ]
-
-        self.file = get_tmp_file()
 
         # Add arguments
 
@@ -171,7 +174,7 @@ class BorgLoggedCommand:
             try:
                 subprocess.run(
                     self.command,
-                    env=environment,
+                    env={"BORG_EXIT_CODES": "modern", **(environment or {})},
                     cwd=working_directory,
                     check=True,
                     # Write to file so that callers can pass this to 'Operation'

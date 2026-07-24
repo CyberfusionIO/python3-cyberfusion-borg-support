@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python3-cyberfusion-borg-support"
-version = "1.6"
+version = "1.7"
 description = "Library for Borg."
 readme = "README.md"
 authors = [
