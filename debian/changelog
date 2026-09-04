@@ -1,3 +1,9 @@
+python3-cyberfusion-borg-support (1.7.1) unstable; urgency=low
+
+  - `Operation`: add missing line types
+
+ -- William Edwards <wedwards@cyberfusion.nl>  Fri, 04 Sep 2026 04:33:00 +0200
+
 python3-cyberfusion-borg-support (1.7) unstable; urgency=low
 
   - Add 'strict' mode to archive create
