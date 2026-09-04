@@ -2,7 +2,7 @@
 
 import json
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from cyberfusion.BorgSupport.exceptions import OperationLineNotImplementedError
 
@@ -13,7 +13,7 @@ class JSONLineType(Enum):
     ARCHIVE_PROGRESS = "archive_progress"
     PROGRESS_MESSAGE = "progress_message"
     PROGRESS_PERCENT = "progress_percent"
-    # FILE_STATUS = "file_status"
+    FILE_STATUS = "file_status"
     LOG_MESSAGE = "log_message"
 
 
@@ -188,38 +188,36 @@ EXIT_CODE_MESSAGE_IDS: Dict[int, MessageID] = {
 }
 
 
-class ArchiveProgressLine:
-    """Abstraction of JSON line in progress file."""
-
+class Line:
     def __init__(self, line: dict) -> None:
         """Set attributes."""
         self._line = line
 
 
-class ProgressMessageLine:
-    """Abstraction of JSON line in progress file."""
+class ArchiveProgressLine(Line):
+    pass
 
-    def __init__(self, line: dict) -> None:
-        """Set attributes."""
-        self._line = line
 
+class ProgressMessageLine(Line):
     @property
     def finished(self) -> bool:
         """Get finished attribute."""
         return self._line["finished"]
 
 
-class ProgressPercentLine:
-    """Abstraction of JSON line in progress file."""
-
-    def __init__(self, line: dict) -> None:
-        """Set attributes."""
-        self._line = line
-
+class ProgressPercentLine(Line):
     @property
     def finished(self) -> bool:
         """Get finished attribute."""
         return self._line["finished"]
+
+
+class FileStatusLine(Line):
+    pass
+
+
+class LogMessageLine(Line):
+    pass
 
 
 class Operation:
@@ -233,14 +231,12 @@ class Operation:
 
     def get_lines(
         self,
-    ) -> List[Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]]:
+    ) -> List[Line]:
         """Get JSON lines from progress file.
 
         Each line is a JSON document, see https://borgbackup.readthedocs.io/en/stable/internals/frontends.html#logging
         """
-        lines: List[
-            Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]
-        ] = []
+        lines: List[Line] = []
 
         with open(self.progress_file, "r") as f:
             for _line in f.read().splitlines():
@@ -248,13 +244,14 @@ class Operation:
 
                 if line["type"] == JSONLineType.ARCHIVE_PROGRESS.value:
                     lines.append(ArchiveProgressLine(line))
-
                 elif line["type"] == JSONLineType.PROGRESS_MESSAGE.value:
                     lines.append(ProgressMessageLine(line))
-
                 elif line["type"] == JSONLineType.PROGRESS_PERCENT.value:
                     lines.append(ProgressPercentLine(line))
-
+                elif line["type"] == JSONLineType.FILE_STATUS.value:
+                    lines.append(FileStatusLine(line))
+                elif line["type"] == JSONLineType.LOG_MESSAGE.value:
+                    lines.append(LogMessageLine(line))
                 else:
                     raise OperationLineNotImplementedError(
                         f"Got unknown line of type '{line['type']}': '{line}'"
@@ -265,7 +262,7 @@ class Operation:
     @property
     def last_line(
         self,
-    ) -> Optional[Union[ArchiveProgressLine, ProgressMessageLine, ProgressPercentLine]]:
+    ) -> Optional[Line]:
         """Get last JSON line from progress file.
 
         The last line contains the most recent status.

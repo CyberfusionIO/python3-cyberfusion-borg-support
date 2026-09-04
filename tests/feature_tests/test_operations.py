@@ -6,6 +6,8 @@ from cyberfusion.BorgSupport.operations import (
     Operation,
     ProgressMessageLine,
     ProgressPercentLine,
+    LogMessageLine,
+    FileStatusLine,
 )
 
 
@@ -20,7 +22,7 @@ def test_operation_attributes() -> None:
 
     # Test lines
 
-    assert len(operation._lines) == 12
+    assert len(operation._lines) == 14
 
     assert isinstance(operation._lines[0], ArchiveProgressLine)
 
@@ -53,6 +55,10 @@ def test_operation_attributes() -> None:
 
     assert isinstance(operation._lines[11], ProgressMessageLine)
     assert operation._lines[11].finished
+
+    assert isinstance(operation._lines[12], LogMessageLine)
+
+    assert isinstance(operation._lines[13], FileStatusLine)
 
     # Test last_line is last line
 

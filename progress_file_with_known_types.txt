@@ -10,3 +10,5 @@
 {"message": "Saving cache config", "operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": false, "time": 1648247801.2267032}
 {"operation": 1, "msgid": "extract", "type": "progress_percent", "finished": false}
 {"operation": 2, "msgid": "cache.commit", "type": "progress_message", "finished": true, "time": 1648247801.2284238}
+{"type": "log_message", "time": 1788488008.8967392, "message": "/var/www/vhosts/test/example.local/shared/storage/framework/sessions/o63mGIQm32KVATZy2cXF80HbIbPsW0BcqkhLccPc: stat: [Errno 2] No such file or directory: 'o63mGIQm32KVATZy2cXF80HbIbPsW0BcqkhLccPc'", "levelname": "WARNING", "name": "borg.archiver", "msgid": "BackupFileNotFoundError"}
+{"type": "file_status", "status": "U", "path": "src/borgbackup.egg-info/entry_points.txt"}
